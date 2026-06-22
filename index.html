@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="MUNITE LOGO.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUNITE — Secretariat Registry</title>
+<style>
+  :root{
+    --primary:#6D28D9;
+    --secondary:#8B5CF6;
+    --accent:#C4B5FD;
+    --bg:#07070A;
+    --gold:#D4AF37;
+    --ivory:#F8F4EA;
+  }
+
+  @font-face{
+    font-family:'fallback-serif';
+    src:local('Georgia');
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html,body{
+    width:100%;height:100%;
+    background:var(--bg);
+    color:var(--ivory);
+    font-family:'Cormorant Garamond','Georgia',serif;
+    overflow-x:hidden;
+  }
+
+  /* ===== BACKGROUND : ROTATING REGISTRY SEAL + GRID ===== */
+  .field{
+    position:fixed;inset:0;
+    z-index:0;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(109,40,217,0.16) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 100%, rgba(212,175,55,0.05) 0%, transparent 60%),
+      var(--bg);
+  }
+
+  .field::before{
+    content:"";
+    position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(196,181,253,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(196,181,253,0.045) 1px, transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(ellipse 70% 60% at 50% 40%, black 10%, transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 40%, black 10%, transparent 75%);
+  }
+
+  .seal-ring{
+    position:absolute;
+    top:50%;left:50%;
+    width:1400px;height:1400px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    border:1px solid rgba(196,181,253,0.06);
+    animation:rotate-slow 220s linear infinite;
+  }
+  .seal-ring.r2{
+    width:1040px;height:1040px;
+    border:1px solid rgba(212,175,55,0.07);
+    animation-duration:160s;
+    animation-direction:reverse;
+  }
+  .seal-ring.r3{
+    width:760px;height:760px;
+    border:1px dashed rgba(196,181,253,0.06);
+    animation-duration:120s;
+  }
+  @keyframes rotate-slow{
+    from{transform:translate(-50%,-50%) rotate(0deg);}
+    to{transform:translate(-50%,-50%) rotate(360deg);}
+  }
+
+  .seal-marks{
+    position:absolute;top:50%;left:50%;
+    width:1400px;height:1400px;
+    transform:translate(-50%,-50%);
+    animation:rotate-slow 220s linear infinite;
+  }
+  .seal-marks span{
+    position:absolute;
+    top:0;left:50%;
+    width:1px;height:14px;
+    background:rgba(212,175,55,0.18);
+    transform-origin:50% 700px;
+  }
+
+  .vignette{
+    position:fixed;inset:0;z-index:1;
+    pointer-events:none;
+    background:radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, rgba(0,0,0,0.75) 100%);
+  }
+
+  /* ===== LAYOUT ===== */
+  .stage{
+    position:relative;z-index:2;
+    min-height:100vh;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:60px 24px 80px;
+  }
+
+  .eyebrow{
+    letter-spacing:0.45em;
+    font-size:11px;
+    font-family:'Helvetica Neue',Arial,sans-serif;
+    color:var(--accent);
+    opacity:0.65;
+    text-transform:uppercase;
+    margin-bottom:28px;
+    text-align:center;
+  }
+
+  #munite-logo-placeholder{
+    width:96px;height:96px;
+    border:1px solid rgba(212,175,55,0.4);
+    border-radius:50%;
+    margin-bottom:30px;
+    position:relative;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #munite-logo-placeholder::before{
+    content:"";
+    position:absolute;inset:8px;
+    border:1px solid rgba(196,181,253,0.25);
+    border-radius:50%;
+  }
+  #munite-logo-placeholder::after{
+    content:"M";
+    font-family:'Cormorant Garamond',serif;
+    font-size:34px;
+    color:var(--gold);
+    opacity:0.85;
+  }
+
+  h1.title{
+    font-size:clamp(40px,7vw,76px);
+    font-weight:500;
+    letter-spacing:0.12em;
+    text-align:center;
+    color:var(--ivory);
+    text-transform:uppercase;
+    line-height:1.05;
+  }
+
+  .title em{
+    font-style:normal;
+    color:var(--gold);
+  }
+
+  .subtitle{
+    margin-top:18px;
+    font-size:15px;
+    letter-spacing:0.32em;
+    text-transform:uppercase;
+    color:var(--accent);
+    opacity:0.55;
+    font-family:'Helvetica Neue',Arial,sans-serif;
+    text-align:center;
+  }
+
+  .divider{
+    width:1px;
+    height:60px;
+    background:linear-gradient(to bottom, transparent, var(--gold), transparent);
+    margin:42px 0;
+    opacity:0.6;
+  }
+
+  /* ===== ACCESS PANEL ===== */
+  .panel{
+    width:100%;
+    max-width:460px;
+    text-align:center;
+  }
+
+  .panel-label{
+    font-family:'Helvetica Neue',Arial,sans-serif;
+    font-size:11px;
+    letter-spacing:0.4em;
+    text-transform:uppercase;
+    color:rgba(248,244,234,0.45);
+    margin-bottom:22px;
+  }
+
+  .code-field{
+    position:relative;
+  }
+
+  .code-input{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid rgba(196,181,253,0.3);
+    color:var(--ivory);
+    font-family:'Courier New',monospace;
+    font-size:28px;
+    letter-spacing:0.5em;
+    text-align:center;
+    padding:14px 8px 18px;
+    outline:none;
+    transition:border-color 0.6s ease;
+    caret-color:var(--gold);
+  }
+
+  .code-input::placeholder{
+    color:rgba(248,244,234,0.18);
+    letter-spacing:0.4em;
+    font-family:'Helvetica Neue',Arial,sans-serif;
+    font-size:13px;
+    text-transform:uppercase;
+  }
+
+  .code-input:focus{
+    border-bottom-color:var(--gold);
+  }
+
+  .code-field::after{
+    content:"";
+    position:absolute;
+    bottom:0;left:50%;
+    width:0;
+    height:1px;
+    background:var(--gold);
+    transform:translateX(-50%);
+    transition:width 0.7s cubic-bezier(.4,0,.2,1);
+  }
+  .code-field.focused::after{
+    width:100%;
+  }
+
+  .submit-row{
+    margin-top:40px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .verify-btn{
+    position:relative;
+    background:transparent;
+    border:1px solid rgba(212,175,55,0.5);
+    color:var(--gold);
+    font-family:'Helvetica Neue',Arial,sans-serif;
+    font-size:11px;
+    letter-spacing:0.38em;
+    text-transform:uppercase;
+    padding:16px 46px;
+    cursor:pointer;
+    transition:all 0.5s ease;
+    overflow:hidden;
+  }
+  .verify-btn::before{
+    content:"";
+    position:absolute;inset:0;
+    background:rgba(212,175,55,0.08);
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform 0.5s ease;
+  }
+  .verify-btn:hover::before{transform:scaleX(1);}
+  .verify-btn:hover{
+    border-color:var(--gold);
+    letter-spacing:0.46em;
+  }
+
+  .footnote{
+    margin-top:56px;
+    font-family:'Helvetica Neue',Arial,sans-serif;
+    font-size:10px;
+    letter-spacing:0.25em;
+    text-transform:uppercase;
+    color:rgba(248,244,234,0.28);
+    text-align:center;
+    line-height:1.9;
+  }
+
+  /* ===== VERIFICATION OVERLAY ===== */
+  .verify-overlay{
+    position:fixed;inset:0;
+    z-index:50;
+    background:rgba(7,7,10,0.97);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.8s ease;
+  }
+  .verify-overlay.active{
+    opacity:1;
+    pointer-events:all;
+  }
+
+  .verify-glyph{
+    width:64px;height:64px;
+    border:1px solid var(--gold);
+    border-top-color:transparent;
+    border-radius:50%;
+    animation:spin 2.4s linear infinite;
+    margin-bottom:36px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .verify-text{
+    font-family:'Helvetica Neue',Arial,sans-serif;
+    font-size:12px;
+    letter-spacing:0.35em;
+    text-transform:uppercase;
+    color:var(--accent);
+    min-height:20px;
+    text-align:center;
+  }
+
+  .verify-sub{
+    margin-top:14px;
+    font-family:'Cormorant Garamond',serif;
+    font-size:15px;
+    color:rgba(248,244,234,0.4);
+    letter-spacing:0.05em;
+    text-align:center;
+  }
+  .munite-logo{
+    width: 500px;
+    height: 500px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 14px;
+  }
+  /* responsive */
+  @media (max-width:560px){
+    .code-input{font-size:20px;letter-spacing:0.35em;}
+    .subtitle{letter-spacing:0.2em;font-size:12px;}
+    .panel-label{letter-spacing:0.25em;}
+  }
+
+  /* reduced motion */
+  @media (prefers-reduced-motion: reduce){
+    .seal-ring, .seal-marks{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="field">
+    <div class="seal-ring r1"></div>
+    <div class="seal-ring r2"></div>
+    <div class="seal-ring r3"></div>
+    <div class="seal-marks" id="sealMarks"></div>
+  </div>
+  <div class="vignette"></div>
+
+  <main class="stage">
+    <div class="eyebrow">Confidential · Secretariat Registry · Tier Omega</div>
+
+    <img
+      src="MUNITE LOGO.png"
+      alt="MUNITE Logo"
+      class="munite-logo"/>
+
+    <h1 class="title">MUNITE <em>Archive</em></h1>
+    <div class="subtitle">Diplomatic Control Vault</div>
+
+    <div class="divider"></div>
+
+    <form class="panel" id="accessForm" autocomplete="off">
+      <div class="panel-label">Secretariat Authentication</div>
+
+      <div class="code-field" id="codeField">
+        <input
+          type="password"
+          class="code-input"
+          id="accessCode"
+          placeholder="Secret Access Code"
+          maxlength="24"
+          required
+        />
+      </div>
+
+      <div class="submit-row">
+        <button type="submit" class="verify-btn">Request Clearance</button>
+      </div>
+    </form>
+
+    <div class="footnote">
+      Unauthorized entry is recorded and reported<br>
+      to the Office of the Secretariat
+    </div>
+  </main>
+
+  <div class="verify-overlay" id="verifyOverlay">
+    <div class="verify-glyph"></div>
+    <div class="verify-text" id="verifyText">Verifying Registry Credentials</div>
+    <div class="verify-sub" id="verifySub">Please remain on this page</div>
+  </div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCeEFqHujlHHAkr8Bq7uOG8CTXYY1Vfd60",
+  authDomain: "munite-acf5d.firebaseapp.com",
+  projectId: "munite-acf5d",
+  storageBucket: "munite-acf5d.firebasestorage.app",
+  messagingSenderId: "785242774756",
+  appId: "1:785242774756:web:2aea5a47dd93d9fbd260f1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.db = db;
+window.getDoc = getDoc;
+window.doc = doc;
+window.collection = collection;
+window.addDoc = addDoc;
+window.serverTimestamp = serverTimestamp;
+</script>
+<script>
+  // ---- background seal tick marks ----
+  const marks = document.getElementById('sealMarks');
+  const total = 72;
+  for(let i=0;i<total;i++){
+    const m = document.createElement('span');
+    m.style.transform = `rotate(${(360/total)*i}deg)`;
+    if(i % 6 === 0){
+      m.style.height = '24px';
+      m.style.background = 'rgba(212,175,55,0.3)';
+    }
+    marks.appendChild(m);
+  }
+
+  // ---- input focus state ----
+  const codeField = document.getElementById('codeField');
+  const codeInput = document.getElementById('accessCode');
+  codeInput.addEventListener('focus', ()=> codeField.classList.add('focused'));
+  codeInput.addEventListener('blur', ()=> { if(!codeInput.value) codeField.classList.remove('focused'); });
+
+  // ---- submit / verification sequence ----
+  const form = document.getElementById('accessForm');
+  const overlay = document.getElementById('verifyOverlay');
+  const verifyText = document.getElementById('verifyText');
+  const verifySub = document.getElementById('verifySub');
+
+  const sequence = [
+    { text: 'Verifying Registry Credentials', sub: 'Cross-referencing secretariat archive' },
+    { text: 'Authenticating Secretariat Access', sub: 'Validating clearance tier' },
+    { text: 'Decrypting Administrative Records', sub: 'Establishing secure channel' },
+    { text: 'Establishing Diplomatic Clearance', sub: 'Finalizing session' },
+  ];
+
+  form.addEventListener('submit', async function(e){
+  e.preventDefault();
+
+  const code = codeInput.value.trim().toUpperCase();
+
+  if (!code) return;
+
+  try {
+
+    const codeRef = await getDoc(doc(db, "adminCodes", code));
+
+    if (!codeRef.exists()) {
+      alert("Invalid Access Code");
+      return;
+    }
+
+    if (codeRef.data().active !== true) {
+      alert("Access Code Disabled");
+      return;
+    }
+
+    overlay.classList.add('active');
+
+    let step = 0;
+    verifyText.textContent = sequence[0].text;
+    verifySub.textContent = sequence[0].sub;
+
+    const interval = setInterval(async () => {
+
+      step++;
+
+      if(step < sequence.length){
+
+        verifyText.style.opacity = 0;
+        verifySub.style.opacity = 0;
+
+        setTimeout(()=>{
+          verifyText.textContent = sequence[step].text;
+          verifySub.textContent = sequence[step].sub;
+          verifyText.style.opacity = 1;
+          verifySub.style.opacity = 1;
+        },350);
+
+      } else {
+
+        clearInterval(interval);
+
+        sessionStorage.setItem("adminCode", code);
+
+        await addDoc(
+          collection(db, "adminLoginHistory"),
+          {
+            adminCode: code,
+            timestamp: serverTimestamp(),
+            status: "success"
+          }
+        );
+
+        window.location.href = "admin.html";
+      }
+
+    },1500);
+
+  } catch(err) {
+    console.error(err);
+    alert("Login failed.");
+  }
+});
+</script>
+
+</body>
+</html>

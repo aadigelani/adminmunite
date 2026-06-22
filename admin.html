@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="MUNITE LOGO.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUNITE &middot; Secretariat Command</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MUNITE SECRETARIAT COMMAND — DESIGN TOKENS
+   Palette: Royal Purple / Gold / Ivory / Black
+   Continued from index.html vault aesthetic
+   ============================================================ */
+:root{
+  --black: #0c0710;
+  --purple-deep: #1f0a36;
+  --purple: #2d0f4d;
+  --purple-mid: #3c1666;
+  --purple-line: #4a1f7a;
+  --gold: #c8a042;
+  --gold-bright: #e3bf66;
+  --gold-dim: #8a6f33;
+  --ivory: #f3ecdd;
+  --ivory-dim: #cfc4ab;
+  --ivory-faint: #948871;
+  --red-status: #9c3b3b;
+  --green-status: #4b7a5e;
+
+  --font-display: 'Cormorant SC', serif;
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans: 'Jost', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius: 2px;
+  --sidebar-w: 268px;
+}
+
+*{ box-sizing: border-box; }
+html,body{
+  margin:0; padding:0;
+  background: var(--black);
+  color: var(--ivory);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; }
+}
+
+/* background: faint engraved guilloché texture via layered radial/conic gradients */
+body{
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(200,160,66,0.05), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(74,31,122,0.18), transparent 45%),
+    repeating-linear-gradient(115deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+}
+
+a{ color: inherit; }
+button{ font-family: inherit; cursor: pointer; }
+::selection{ background: var(--gold-dim); color: var(--black); }
+
+::-webkit-scrollbar{ width: 10px; height: 10px; }
+::-webkit-scrollbar-track{ background: var(--purple-deep); }
+::-webkit-scrollbar-thumb{ background: var(--purple-line); border: 2px solid var(--purple-deep); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover{ background: var(--gold-dim); }
+
+:focus-visible{ outline: 1px solid var(--gold-bright); outline-offset: 2px; }
+
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+.app-shell{
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   SIDEBAR — "The Secretariat Rail"
+   ============================================================ */
+.sidebar{
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background:
+    linear-gradient(180deg, var(--purple-deep) 0%, #160826 70%, #0e0518 100%);
+  border-right: 1px solid var(--purple-line);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top:0; bottom:0; left:0;
+  z-index: 50;
+  transition: transform .35s cubic-bezier(.6,0,.2,1);
+}
+
+.sidebar-brand{
+  padding: 30px 24px 22px;
+  border-bottom: 1px solid rgba(200,160,66,0.18);
+  text-align: center;
+}
+#munite-logo-placeholder{
+  width: 56px; height: 56px;
+  margin: 0 auto 14px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--gold-bright);
+  background: radial-gradient(circle, rgba(200,160,66,0.08), transparent 70%);
+  /* TODO: Replace with official MUNITE crest/logo asset */
+}
+.brand-name{
+  font-family: var(--font-display);
+  letter-spacing: 0.22em;
+  font-size: 20px;
+  color: var(--ivory);
+  margin: 0;
+}
+.brand-sub{
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.24em;
+  color: var(--gold-dim);
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+
+.session-pill{
+  margin: 16px 24px 0;
+  padding: 7px 10px;
+  border: 1px solid rgba(200,160,66,0.3);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--ivory-dim);
+}
+.session-pill .dot{
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green-status);
+  box-shadow: 0 0 6px var(--green-status);
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+@keyframes pulse-dot{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+.nav-section{
+  flex: 1;
+  padding: 22px 14px;
+  overflow-y: auto;
+}
+.nav-eyebrow{
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+  padding: 0 10px;
+  margin: 18px 0 8px;
+}
+.nav-eyebrow:first-child{ margin-top: 0; }
+
+.nav-item{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  margin-bottom: 2px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--ivory-dim);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  letter-spacing: 0.03em;
+  text-align: left;
+  position: relative;
+  transition: all .2s ease;
+}
+.nav-item .glyph{
+  width: 18px; text-align:center;
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--gold-dim);
+  transition: color .2s ease;
+}
+.nav-item:hover{
+  background: rgba(200,160,66,0.06);
+  color: var(--ivory);
+  border-color: rgba(200,160,66,0.15);
+}
+.nav-item:hover .glyph{ color: var(--gold-bright); }
+.nav-item.active{
+  background: linear-gradient(90deg, rgba(200,160,66,0.14), rgba(200,160,66,0.02));
+  color: var(--ivory);
+  border-left: 2px solid var(--gold-bright);
+  border-color: rgba(200,160,66,0.25);
+}
+.nav-item.active .glyph{ color: var(--gold-bright); }
+
+.sidebar-footer{
+  padding: 16px 24px 22px;
+  border-top: 1px solid rgba(200,160,66,0.15);
+}
+.admin-chip{
+  display:flex; align-items:center; gap:10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ivory-dim);
+}
+.admin-chip .badge{
+  width: 28px; height: 28px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family: var(--font-display);
+  color: var(--gold-bright);
+  font-size: 13px;
+}
+.logout-link{
+  display:block;
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+  text-decoration: none;
+  border: 1px solid rgba(200,160,66,0.2);
+  text-align: center;
+  padding: 8px;
+  border-radius: var(--radius);
+  transition: all .2s ease;
+}
+.logout-link:hover{ color: var(--gold-bright); border-color: var(--gold-dim); background: rgba(200,160,66,0.05); }
+
+/* mobile toggle */
+.mobile-bar{
+  display: none;
+  position: fixed;
+  top:0; left:0; right:0;
+  height: 58px;
+  background: var(--purple-deep);
+  border-bottom: 1px solid var(--purple-line);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 60;
+}
+.mobile-bar .brand-name{ font-size: 16px; margin:0; }
+.burger{
+  width: 38px; height: 38px;
+  border: 1px solid var(--gold-dim);
+  background: transparent;
+  border-radius: var(--radius);
+  color: var(--gold-bright);
+  font-size: 16px;
+}
+.sidebar-overlay{
+  display:none;
+  position: fixed; inset:0;
+  background: rgba(0,0,0,0.6);
+  z-index: 45;
+}
+
+/* ============================================================
+   MAIN WORKSPACE
+   ============================================================ */
+.workspace{
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-width: 0;
+  padding: 36px 44px 70px;
+}
+
+.topline{
+  display:flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 30px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--purple-line);
+}
+.topline .eyebrow{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin: 0 0 6px;
+}
+.topline h1{
+  font-family: var(--font-display);
+  font-size: 36px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ivory);
+}
+.topline .meta{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ivory-faint);
+  text-align: right;
+}
+.topline .meta strong{ color: var(--ivory-dim); }
+
+.section{ display:none; animation: fade-in .4s ease; }
+.section.active{ display:block; }
+@keyframes fade-in{ from{opacity:0; transform: translateY(6px);} to{opacity:1; transform:none;} }
+
+/* ============================================================
+   SHARED COMPONENTS
+   ============================================================ */
+.panel-title{
+  font-family: var(--font-display);
+  font-size: 19px;
+  letter-spacing: 0.05em;
+  color: var(--ivory);
+  margin: 0 0 4px;
+}
+.panel-sub{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ivory-faint);
+  text-transform: uppercase;
+}
+
+.btn{
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--gold-dim);
+  background: transparent;
+  color: var(--gold-bright);
+  transition: all .2s ease;
+  white-space: nowrap;
+}
+.btn:hover{ background: rgba(200,160,66,0.1); border-color: var(--gold-bright); }
+.btn-primary{
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold-dim));
+  color: var(--black);
+  border: 1px solid var(--gold-bright);
+  font-weight: 600;
+}
+.btn-primary:hover{ filter: brightness(1.08); box-shadow: 0 0 18px rgba(200,160,66,0.25); }
+.btn-ghost{ border-color: var(--purple-line); color: var(--ivory-dim); }
+.btn-ghost:hover{ border-color: var(--ivory-faint); color: var(--ivory); background: rgba(255,255,255,0.03); }
+.btn-danger{ border-color: rgba(156,59,59,0.5); color: #d18a8a; }
+.btn-danger:hover{ background: rgba(156,59,59,0.12); border-color: var(--red-status); }
+.btn-sm{ padding: 6px 11px; font-size: 11px; }
+
+/* ============================================================
+   OVERVIEW
+   ============================================================ */
+.metric-grid{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+.metric-card{
+  background: linear-gradient(165deg, var(--purple) 0%, var(--purple-deep) 100%);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  padding: 22px 22px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before{
+  content:'';
+  position:absolute; top:0; left:0; right:0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  opacity: .5;
+}
+.metric-card .m-label{
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+}
+.metric-card .m-value{
+  font-family: var(--font-display);
+  font-size: 42px;
+  color: var(--ivory);
+  margin: 10px 0 6px;
+  line-height: 1;
+}
+.metric-card .m-foot{
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--gold-bright);
+}
+.metric-card .m-foot.neutral{ color: var(--ivory-faint); }
+
+.overview-grid{
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 18px;
+}
+.panel{
+  background: var(--purple-deep);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  padding: 22px 24px 24px;
+  margin-bottom: 18px;
+}
+.panel-head{
+  display:flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.timeline{ list-style:none; margin:0; padding:0; }
+.timeline li{
+  display:flex; gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px dashed rgba(200,160,66,0.14);
+}
+.timeline li:last-child{ border-bottom:none; }
+.timeline .t-dot{
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold-bright);
+  margin-top: 6px;
+  flex-shrink:0;
+  box-shadow: 0 0 8px rgba(200,160,66,0.5);
+}
+.timeline .t-body p{ margin:0; font-size: 13.5px; color: var(--ivory-dim); }
+.timeline .t-body p strong{ color: var(--gold-bright); font-weight:600; }
+.timeline .t-time{
+  font-family: var(--font-mono); font-size: 10px; color: var(--ivory-faint);
+  margin-top: 3px; display:block;
+}
+
+.committee-row{
+  display:flex; align-items:center; gap: 12px;
+  margin-bottom: 13px;
+  font-size: 12.5px;
+}
+.committee-row .c-name{ width: 92px; flex-shrink:0; color: var(--ivory-dim); font-family: var(--font-sans); }
+.committee-row .c-bar{
+  flex:1; height: 7px; background: rgba(255,255,255,0.05);
+  border-radius: 4px; overflow:hidden; border: 1px solid rgba(200,160,66,0.1);
+}
+.committee-row .c-fill{ height:100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright)); }
+.committee-row .c-pct{ width: 38px; text-align:right; font-family: var(--font-mono); color: var(--ivory-faint); font-size: 11px; }
+
+.progress-ring-wrap{ display:flex; align-items:center; gap: 22px; }
+.progress-ring-wrap svg{ flex-shrink:0; }
+.progress-ring-text .big{ font-family: var(--font-display); font-size: 30px; color: var(--ivory); }
+.progress-ring-text .small{ font-family: var(--font-mono); font-size: 10.5px; color: var(--ivory-faint); margin-top:4px; }
+
+/* ============================================================
+   TOOLBAR (Delegates / shared)
+   ============================================================ */
+.toolbar{
+  display:flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  background: var(--purple-deep);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+}
+.toolbar-left{ display:flex; gap: 10px; flex-wrap: wrap; flex: 1; }
+.toolbar-right{ display:flex; gap: 10px; flex-wrap: wrap; }
+.input, .select{
+  background: var(--black);
+  border: 1px solid var(--purple-line);
+  color: var(--ivory);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  min-width: 160px;
+}
+.input::placeholder{ color: var(--ivory-faint); }
+.input:focus, .select:focus{ border-color: var(--gold-dim); outline:none; }
+.search-wrap{ position: relative; min-width: 220px; flex: 1; max-width: 320px; }
+.search-wrap .input{ width: 100%; padding-left: 32px; }
+.search-wrap .ic{ position:absolute; left:10px; top:50%; transform: translateY(-50%); color: var(--ivory-faint); font-size: 13px; }
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+.table-wrap{
+  background: var(--purple-deep);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+table{ width: 100%; border-collapse: collapse; min-width: 760px; }
+thead th{
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--purple-line);
+  background: rgba(200,160,66,0.03);
+  white-space: nowrap;
+}
+tbody td{
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--ivory-dim);
+  border-bottom: 1px solid rgba(200,160,66,0.08);
+  white-space: nowrap;
+}
+tbody tr{ transition: background .15s ease; }
+tbody tr:hover{ background: rgba(200,160,66,0.04); }
+tbody tr:last-child td{ border-bottom:none; }
+.cell-name{ color: var(--ivory); font-weight: 500; }
+.cell-mono{ font-family: var(--font-mono); font-size: 12px; color: var(--ivory-faint); }
+
+.status-tag{
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid;
+}
+.status-tag.allocated{ color: #9fd6b3; border-color: rgba(75,122,94,0.5); background: rgba(75,122,94,0.1); }
+.status-tag.pending{ color: var(--gold-bright); border-color: rgba(200,160,66,0.45); background: rgba(200,160,66,0.08); }
+.status-tag.disabled{ color: #d18a8a; border-color: rgba(156,59,59,0.4); background: rgba(156,59,59,0.08); }
+.status-tag.active{ color: #9fd6b3; border-color: rgba(75,122,94,0.5); background: rgba(75,122,94,0.1); }
+
+.action-row{ display:flex; gap: 6px; }
+.icon-btn{
+  width: 30px; height: 30px;
+  border: 1px solid var(--purple-line);
+  background: transparent;
+  border-radius: var(--radius);
+  color: var(--ivory-faint);
+  font-size: 13px;
+  display:flex; align-items:center; justify-content:center;
+  transition: all .15s ease;
+}
+.icon-btn:hover{ color: var(--gold-bright); border-color: var(--gold-dim); background: rgba(200,160,66,0.06); }
+.icon-btn.danger:hover{ color: #d18a8a; border-color: var(--red-status); background: rgba(156,59,59,0.08); }
+
+.table-footnote{
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ivory-faint);
+  border-top: 1px solid rgba(200,160,66,0.08);
+}
+
+/* ============================================================
+   SLIDE-OVER PANEL
+   ============================================================ */
+.overlay-mask{
+  position: fixed; inset:0;
+  background: rgba(8,4,14,0.7);
+  backdrop-filter: blur(2px);
+  z-index: 90;
+  opacity:0; pointer-events:none;
+  transition: opacity .3s ease;
+}
+.overlay-mask.show{ opacity:1; pointer-events:auto; }
+
+.slideover{
+  position: fixed;
+  top:0; right:0; bottom:0;
+  width: 440px;
+  max-width: 92vw;
+  background: linear-gradient(180deg, var(--purple-deep), #160826);
+  border-left: 1px solid var(--gold-dim);
+  z-index: 95;
+  transform: translateX(100%);
+  transition: transform .4s cubic-bezier(.6,0,.2,1);
+  display:flex; flex-direction:column;
+  box-shadow: -20px 0 60px rgba(0,0,0,0.5);
+}
+.slideover.show{ transform: translateX(0); }
+.slideover-head{
+  padding: 26px 28px 18px;
+  border-bottom: 1px solid rgba(200,160,66,0.18);
+  display:flex; justify-content: space-between; align-items: flex-start;
+}
+.slideover-head h3{
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin: 0 0 4px;
+  color: var(--ivory);
+}
+.slideover-head p{ margin:0; font-family: var(--font-mono); font-size: 10px; color: var(--ivory-faint); text-transform: uppercase; letter-spacing: 0.1em; }
+.close-x{
+  background: transparent; border: 1px solid var(--purple-line);
+  width: 32px; height: 32px; border-radius: var(--radius);
+  color: var(--ivory-faint); font-size: 14px;
+}
+.close-x:hover{ color: var(--gold-bright); border-color: var(--gold-dim); }
+
+.slideover-body{ padding: 24px 28px; overflow-y: auto; flex: 1; }
+.field{ margin-bottom: 18px; }
+.field label{
+  display:block; font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-dim);
+  margin-bottom: 7px;
+}
+.field .input, .field .select, .field textarea{
+  width: 100%; min-width: 0;
+}
+.field textarea{
+  background: var(--black); border: 1px solid var(--purple-line); color: var(--ivory);
+  font-family: var(--font-sans); font-size: 13px; padding: 10px 12px; border-radius: var(--radius);
+  resize: vertical; min-height: 90px;
+}
+.field-hint{ font-family: var(--font-mono); font-size: 10px; color: var(--ivory-faint); margin-top:6px; }
+.field-row{ display:flex; gap: 14px; }
+.field-row .field{ flex:1; }
+
+.slideover-foot{
+  padding: 18px 28px 26px;
+  border-top: 1px solid rgba(200,160,66,0.15);
+  display:flex; gap: 12px; justify-content: flex-end;
+}
+
+.priority-pick{ display:flex; gap: 10px; }
+.priority-opt{
+  flex:1; text-align:center; padding: 10px 8px;
+  border: 1px solid var(--purple-line); border-radius: var(--radius);
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ivory-faint); cursor:pointer; transition: all .15s ease;
+}
+.priority-opt.sel{ border-color: var(--gold-bright); color: var(--gold-bright); background: rgba(200,160,66,0.08); }
+
+.preview-card{
+  margin-top: 20px;
+  border: 1px solid rgba(200,160,66,0.2);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  background: rgba(200,160,66,0.03);
+}
+.preview-card .pc-eyebrow{ font-family: var(--font-mono); font-size: 9px; color: var(--gold-dim); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom:8px; }
+.preview-card h4{ font-family: var(--font-display); font-size: 17px; margin: 0 0 6px; color: var(--ivory); }
+.preview-card p{ font-family: var(--font-serif); font-size: 14px; color: var(--ivory-dim); margin:0; line-height:1.5; }
+
+/* ============================================================
+   NOTIFICATIONS SECTION specific
+   ============================================================ */
+.notif-layout{ display:grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+.notif-history-item{
+  padding: 14px 0; border-bottom: 1px dashed rgba(200,160,66,0.14);
+}
+.notif-history-item:last-child{ border-bottom:none; }
+.notif-history-item .nh-top{ display:flex; justify-content: space-between; margin-bottom: 4px; }
+.notif-history-item .nh-title{ font-size: 13.5px; color: var(--ivory); font-weight:500; }
+.notif-history-item .nh-time{ font-family: var(--font-mono); font-size: 10px; color: var(--ivory-faint); }
+.notif-history-item .nh-msg{ font-size: 12.5px; color: var(--ivory-faint); }
+
+/* ============================================================
+   SETTINGS — admin code cards
+   ============================================================ */
+.code-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 14px; }
+.code-card{
+  background: var(--purple-deep); border: 1px solid var(--purple-line);
+  border-radius: var(--radius); padding: 18px 18px 16px;
+  position:relative;
+}
+.code-card .cc-code{
+  font-family: var(--font-display); font-size: 24px; letter-spacing: 0.12em; color: var(--ivory);
+}
+.code-card .cc-meta{ font-family: var(--font-mono); font-size: 10px; color: var(--ivory-faint); margin: 8px 0 14px; }
+.code-card .cc-actions{ display:flex; gap: 8px; }
+
+/* ============================================================
+   FOOTER SEAL
+   ============================================================ */
+.footer-seal{
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--purple-line);
+  text-align:center;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+}
+.munite-logo{
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 14px;
+}
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1100px){
+  .metric-grid{ grid-template-columns: repeat(2,1fr); }
+  .overview-grid{ grid-template-columns: 1fr; }
+  .notif-layout{ grid-template-columns: 1fr; }
+}
+@media (max-width: 860px){
+  .mobile-bar{ display:flex; }
+  .sidebar{ transform: translateX(-100%); top:0; }
+  .sidebar.open{ transform: translateX(0); }
+  .sidebar-overlay.show{ display:block; }
+  .workspace{ margin-left:0; padding: 90px 18px 60px; }
+  .metric-grid{ grid-template-columns: 1fr; }
+  .topline{ flex-direction: column; align-items: flex-start; }
+  .topline .meta{ text-align:left; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= MOBILE TOP BAR ================= -->
+<div class="mobile-bar">
+  <p class="brand-name">MUNITE</p>
+  <button class="burger" id="burgerBtn" aria-label="Open menu">&#9776;</button>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app-shell">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img
+        src="MUNITE LOGO.png"
+        alt="MUNITE Logo"
+        class="munite-logo"
+      />
+      <!-- TODO: Replace placeholder div above with official MUNITE crest/logo asset -->
+      <p class="brand-name">MUNITE</p>
+      <p class="brand-sub">Secretariat Command</p>
+    </div>
+
+    <div class="session-pill">
+      <span class="dot"></span>
+      SESSION ACTIVE &middot; CONF. 2026
+    </div>
+
+    <nav class="nav-section">
+      <p class="nav-eyebrow">Operations</p>
+      <button class="nav-item active" data-section="overview"><span class="glyph">&#9670;</span> Overview</button>
+      <button class="nav-item" data-section="delegates"><span class="glyph">&#9650;</span> Delegates</button>
+      <button class="nav-item" data-section="notifications"><span class="glyph">&#9839;</span> Notifications</button>
+      <button class="nav-item" data-section="allocations"><span class="glyph">&#9908;</span> Allocations</button>
+
+      <p class="nav-eyebrow">Records</p>
+      <button class="nav-item" data-section="logs"><span class="glyph">&#9776;</span> Activity Logs</button>
+      <button class="nav-item" data-section="settings"><span class="glyph">&#9881;</span> Settings</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="admin-chip">
+        <span class="badge">A</span>
+        <div>
+          <div id="currentAdminDisplay"style="color:var(--ivory-dim); font-size:11.5px;">Loading...</div>
+          <div style="color:var(--ivory-faint); font-size:9.5px;">Secretariat Access</div>
+        </div>
+      </div>
+      <a href="#" id="logoutBtn" class="logout-link">End Session</a>
+    </div>
+  </aside>
+
+  <!-- ================= WORKSPACE ================= -->
+  <main class="workspace">
+
+    <!-- ============ OVERVIEW ============ -->
+    <section class="section active" id="sec-overview">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Secretariat Command &middot; Overview</p>
+          <h1>Conference Overview</h1>
+        </div>
+        <div class="meta">
+          <strong>MUNITE 2026</strong><br>
+          Last synced 09:42:11 IST
+        </div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="m-label">Total Delegates</div>
+          <div id="totalDelegatesMetric" class="m-value">0</div>
+          <div class="m-foot">&#8593; 14 registered today</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-label">Allocated Delegates</div>
+          <div id="allocatedMetric" class="m-value">0</div>
+          <div class="m-foot">79% of total</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-label">Pending Delegates</div>
+          <div id="pendingMetric" class="m-value">0</div>
+          <div class="m-foot neutral">Awaiting allocation</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-label">Notifications Sent</div>
+          <div id="notificationMetric" class="m-value">0</div>
+          <div class="m-foot neutral">3 published today</div>
+        </div>
+      </div>
+
+      <div class="overview-grid">
+        <div>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="panel-title">Recent Activity</p>
+                <p class="panel-sub">Live secretariat feed</p>
+              </div>
+              <button class="btn btn-ghost btn-sm" data-goto="logs">View All</button>
+            </div>
+            <ul class="timeline" id="overviewActivityFeed">
+            
+            </ul>
+          </div>
+        </div>
+
+        <div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-title">Committee Distribution</p>
+              <p class="panel-sub">Delegates per committee</p>
+            </div>
+          </div>
+
+          <p style="color:var(--ivory-faint)">
+            Committee analytics coming soon.
+          </p>
+        </div>
+
+        <div class="panel">
+          <p class="panel-title">Allocation Progress</p>
+          <p class="panel-sub" style="margin-bottom:18px;">
+            Conference-wide
+          </p>
+
+          <div class="progress-ring-wrap">
+            ...
+          </div>
+
+          <div
+            id="allocationProgressText"
+            style="margin-top:12px;color:var(--ivory-faint);">
+            0 / 0 allocated
+          </div>
+          <div class="big" id="allocationPercent">0%</div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- ============ DELEGATES ============ -->
+    <section class="section" id="sec-delegates">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Secretariat Command &middot; Delegate Affairs</p>
+          <h1>Delegates</h1>
+        </div>
+        <div class="meta"><strong>312</strong> registered total</div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-wrap">
+            <span class="ic">&#8981;</span>
+            <input class="input" type="text" placeholder="Search by name or phone&hellip;">
+          </div>
+          <select class="select">
+            <option>All Committees</option>
+            <option>UNSC</option>
+            <option>UNHRC</option>
+            <option>DISEC</option>
+            <option>ECOSOC</option>
+            <option>Lok Sabha</option>
+          </select>
+          <select class="select">
+            <option>All Statuses</option>
+            <option>Allocated</option>
+            <option>Pending</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-ghost btn-sm" id="downloadCsvBtn">Download CSV</button>
+          <button class="btn btn-ghost btn-sm" id="downloadXlsBtn">Download Excel</button>
+          <button class="btn btn-primary btn-sm" id="addDelegateBtn">+ Add Delegate</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Phone</th><th>DOB</th><th>Committee</th>
+              <th>Portfolio</th><th>Allocated</th><th>Created At</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="delegateTableBody">
+            <!-- Rows populated with mock data via JS; replace with Firestore query on /delegates -->
+          </tbody>
+        </table>
+        <div class="table-footnote">Showing 8 of 312 delegates &middot; mock data, replace with live Firestore collection <code>delegates</code></div>
+      </div>
+    </section>
+
+    <!-- ============ NOTIFICATIONS ============ -->
+    <section class="section" id="sec-notifications">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Secretariat Command &middot; Broadcasts</p>
+          <h1>Notifications</h1>
+        </div>
+        <div class="meta"><strong>18</strong> published total</div>
+      </div>
+
+      <div class="notif-layout">
+        <div class="panel">
+          <p class="panel-title">Publish Notification</p>
+          <p class="panel-sub" style="margin-bottom:20px;">Visible to all delegates instantly</p>
+
+          <div class="field">
+            <label>Title</label>
+            <input id="notificationTitle" class="input" type="text" placeholder="e.g. Committee Room Change">
+          </div>
+          <div class="field">
+            <label>Message</label>
+            <textarea id="notificationMessage" placeholder="Write the full notification body&hellip;"></textarea>
+          </div>
+          <div class="field">
+            <label>Priority</label>
+            <div id= "notificationPriority" class="priority-pick">
+              <div class="priority-opt" data-priority="low">Low</div>
+              <div class="priority-opt sel" data-priority="standard">Standard</div>
+              <div class="priority-opt" data-priority="urgent">Urgent</div>
+            </div>
+          </div>
+
+          <div id="notificationPreview" class="preview-card" style="display:none;">
+            <div class="pc-eyebrow">Preview</div>
+            <h4 id="previewTitle">&mdash;</h4>
+            <p id="previewMessage">&mdash;</p>
+          </div>
+
+          <div style="display:flex; gap:12px; margin-top:22px;">
+            <button class="btn btn-ghost" id="previewBtn">Preview</button>
+            <button class="btn btn-primary" id="publishBtn">Publish Notification</button>
+          </div>
+          <!-- TODO: On publish, write document to Firestore collection `notifications`
+               { title, message, priority, createdAt, createdBy: adminCode }
+               Also write entry to `adminActivityLogs` -->
+        </div>
+
+        <div class="panel">
+          <div id="notificationHistory">
+            Loading notifications...
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ALLOCATIONS ============ -->
+    <section class="section" id="sec-allocations">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Secretariat Command &middot; Portfolio Matters</p>
+          <h1>Allocations</h1>
+        </div>
+        <div class="meta"><strong>247</strong> finalized allocations</div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-wrap">
+            <span class="ic">&#8981;</span>
+            <input class="input" type="text" placeholder="Search allocations&hellip;">
+          </div>
+          <select class="select">
+            <option>All Committees</option>
+            <option>UNSC</option>
+            <option>UNHRC</option>
+            <option>DISEC</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary btn-sm" id="manualAssignBtn">Manual Assign</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Delegate</th><th>Committee</th><th>Portfolio</th><th>Allocation Time</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="allocationTableBody"></tbody>
+        </table>
+        <div class="table-footnote">Replace with live Firestore collection <code>allocations</code></div>
+      </div>
+    </section>
+
+    <!-- ============ ACTIVITY LOGS ============ -->
+    <section class="section" id="sec-logs">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Secretariat Command &middot; Records</p>
+          <h1>Activity Logs</h1>
+        </div>
+        <div class="meta">Full secretariat ledger</div>
+      </div>
+
+      <div class="panel">
+        <ul class="timeline" id="fullActivityTimeline">
+          
+        </ul>
+        <!-- TODO: Replace with paginated query on Firestore collection `adminActivityLogs`, ordered by timestamp desc -->
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section class="section" id="sec-settings">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Secretariat Command &middot; Access Control</p>
+          <h1>Settings</h1>
+        </div>
+        <div class="meta">5 active access codes</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="panel-title">Admin Access Codes</p>
+            <p class="panel-sub">Secretariat members authenticate by code, not credentials</p>
+          </div>
+          <button class="btn btn-primary btn-sm" id="addCodeBtn">+ Add Code</button>
+        </div>
+
+        <div id= "adminCodesGrid" class="code-grid">
+          Loading Codes...
+        </div>
+        <!-- TODO: Replace with live Firestore collection `adminCodes`
+             Document shape: { code: string, active: boolean, createdAt: timestamp } -->
+      </div>
+
+      <div class="panel">
+        <p class="panel-title">Login History</p>
+        <p class="panel-sub" style="margin-bottom:18px;">Most recent secretariat sign-ins</p>
+        <div class="table-wrap" style="border:none;">
+          <table>
+            <thead><tr><th>Code Used</th><th>Timestamp</th><th>Device</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="cell-name">ALPHA</td><td class="cell-mono">20 Jun 2026, 09:41 IST</td><td>Chrome &middot; macOS</td><td><span class="status-tag allocated">Success</span></td></tr>
+              <tr><td class="cell-name">ECHO</td><td class="cell-mono">19 Jun 2026, 19:03 IST</td><td>Safari &middot; iOS</td><td><span class="status-tag allocated">Success</span></td></tr>
+              <tr><td class="cell-name">FOXTROT</td><td class="cell-mono">19 Jun 2026, 14:51 IST</td><td>Chrome &middot; Windows</td><td><span class="status-tag disabled">Rejected</span></td></tr>
+              <tr><td class="cell-name">CHARLIE</td><td class="cell-mono">18 Jun 2026, 21:30 IST</td><td>Firefox &middot; Windows</td><td><span class="status-tag allocated">Success</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- TODO: Replace with live Firestore collection `adminLoginHistory` -->
+      </div>
+    </section>
+
+    <div class="footer-seal">MUNITE Secretariat &middot; Confidential Operations Console &middot; 2026</div>
+  </main>
+</div>
+
+<!-- ================= ADD DELEGATE SLIDE-OVER ================= -->
+<div class="overlay-mask" id="overlayMask"></div>
+<div class="slideover" id="delegateSlideover">
+  <div class="slideover-head">
+    <div>
+      <h3>Add Delegate</h3>
+      <p>New registration entry</p>
+    </div>
+    <button class="close-x" id="closeSlideoverBtn">&#10005;</button>
+  </div>
+  <div class="slideover-body">
+    <div class="field">
+      <label>Name</label>
+      <input id="delegateName" class="input" type="text" placeholder="Full legal name">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Phone Number</label>
+        <input id="delegatePhone" class="input" type="tel" placeholder="+91 00000 00000">
+      </div>
+      <div class="field">
+        <label>Date of Birth</label>
+        <input id="delegateDob" class="input" type="date">
+      </div>
+    </div>
+    <div class="field">
+      <label>Committee Preference</label>
+      <select id="delegateCommittee" class="select" style="width:100%;">
+        <option>UNSC</option>
+        <option>UNHRC</option>
+        <option>DISEC</option>
+        <option>ECOSOC</option>
+        <option>Lok Sabha</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Email <span style="color:var(--ivory-faint); text-transform:none; letter-spacing:0;">(optional)</span></label>
+      <input id="delegateEmail" class="input" type="email" placeholder="delegate@email.com">
+    </div>
+    <div class="field">
+      <label>Institution <span style="color:var(--ivory-faint); text-transform:none; letter-spacing:0;">(optional)</span></label>
+      <input id="delegateInstitution" class="input" type="text" placeholder="School / college name">
+    </div>
+    <p class="field-hint">All fields marked optional may be left blank at registration and completed later.</p>
+  </div>
+  <div class="slideover-foot">
+    <button class="btn btn-ghost" id="cancelDelegateBtn">Cancel</button>
+    <button class="btn btn-primary" id="submitDelegateBtn">Add Delegate</button>
+  </div>
+  <!-- TODO: On submit, write new document to Firestore collection `delegates`
+       { name, phone, dob, committeePreference, email, institution, allocated:false, createdAt: serverTimestamp() }
+       Then write entry to `adminActivityLogs`: "{adminCode} created delegate — {name}" -->
+</div>
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp
+}
+from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCeEFqHujlHHAkr8Bq7uOG8CTXYY1Vfd60",
+  authDomain: "munite-acf5d.firebaseapp.com",
+  projectId: "munite-acf5d",
+  storageBucket: "munite-acf5d.firebasestorage.app",
+  messagingSenderId: "785242774756",
+  appId: "1:785242774756:web:2aea5a47dd93d9fbd260f1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.db = db;
+
+window.collection = collection;
+window.getDocs = getDocs;
+
+window.doc = doc;
+window.setDoc = setDoc;
+
+window.getDoc = getDoc;
+
+window.addDoc = addDoc;
+window.updateDoc = updateDoc;
+window.deleteDoc = deleteDoc;
+
+window.serverTimestamp = serverTimestamp;
+console.log("Firebase Loaded");
+console.log(window.collection);
+console.log(window.getDocs);
+
+
+const currentAdminCode = sessionStorage.getItem("adminCode");
+
+if (!currentAdminCode) {
+  window.location.href = "index.html";
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const el = document.getElementById("currentAdminDisplay");
+
+  if (el) {
+    el.textContent = `Code ${currentAdminCode}`;
+  }
+});
+document.getElementById("logoutBtn")
+  .addEventListener("click", (e) => {
+
+    e.preventDefault();
+
+    sessionStorage.removeItem("adminCode");
+
+    window.location.href = "index.html";
+});
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const navItems = document.querySelectorAll('.nav-item');
+const sections = document.querySelectorAll('.section');
+
+function goToSection(name){
+  navItems.forEach(n => n.classList.toggle('active', n.dataset.section === name));
+  sections.forEach(s => s.classList.toggle('active', s.id === 'sec-' + name));
+  closeSidebarMobile();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+navItems.forEach(item => {
+  item.addEventListener('click', () => goToSection(item.dataset.section));
+});
+document.querySelectorAll('[data-goto]').forEach(btn=>{
+  btn.addEventListener('click', ()=> goToSection(btn.dataset.goto));
+});
+
+/* ============================================================
+   MOBILE SIDEBAR TOGGLE
+   ============================================================ */
+const sidebar = document.getElementById('sidebar');
+const burgerBtn = document.getElementById('burgerBtn');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+function openSidebarMobile(){
+  sidebar.classList.add('open');
+  sidebarOverlay.classList.add('show');
+}
+function closeSidebarMobile(){
+  sidebar.classList.remove('open');
+  sidebarOverlay.classList.remove('show');
+}
+burgerBtn.addEventListener('click', openSidebarMobile);
+sidebarOverlay.addEventListener('click', closeSidebarMobile);
+
+/* ============================================================
+   MOCK DATA — DELEGATES
+   TODO: Replace entirely with onSnapshot/getDocs query against
+   Firestore collection `delegates`
+   ============================================================ */
+
+
+const delegateTableBody = document.getElementById('delegateTableBody');
+async function loadNotifications() {
+
+  try {
+
+    const snapshot = await getDocs(
+      collection(db, "notifications")
+    );
+
+    const container =
+      document.getElementById("notificationHistory");
+
+    let html = "";
+
+    snapshot.forEach(docSnap => {
+
+      const n = docSnap.data();
+
+      html += `
+        <div class="notif-history-item">
+          <div class="nh-top">
+            <span class="nh-title">
+              ${n.title || "Untitled"}
+            </span>
+
+            <span class="nh-time">
+              ${n.priority || "standard"}
+            </span>
+          </div>
+
+          <p class="nh-msg">
+            ${n.message || ""}
+          </p>
+        </div>
+      `;
+    });
+
+    container.innerHTML =
+      html || "No notifications published.";
+
+  } catch(err) {
+
+    console.error(err);
+
+  }
+
+}
+async function loadDelegates() {
+
+  try {
+
+    const snapshot = await window.getDocs(
+      collection(window.db, "delegates")
+    );
+
+    let html = "";
+
+    snapshot.forEach(docSnap => {
+
+      const d = docSnap.data();
+
+      html += `
+      <tr>
+        <td class="cell-name">${d.name || ""}</td>
+        <td class="cell-mono">${d.phone || ""}</td>
+        <td class="cell-mono">${d.dob || ""}</td>
+        <td>${d.committeePreference || ""}</td>
+        <td>${d.portfolio || "-"}</td>
+
+        <td>
+          ${
+            d.allocated
+              ? '<span class="status-tag allocated">Allocated</span>'
+              : '<span class="status-tag pending">Pending</span>'
+          }
+        </td>
+
+        <td class="cell-mono">
+          -
+        </td>
+
+        <td>
+          <div class="action-row">
+
+            <button
+              class="icon-btn view-btn"
+              data-id="${docSnap.id}">
+              👁
+            </button>
+
+            <button
+              class="icon-btn edit-btn"
+              data-id="${docSnap.id}">
+              ✎
+            </button>
+
+            <button
+              class="icon-btn danger delete-btn"
+              data-id="${docSnap.id}">
+              🗑
+            </button>
+
+          </div>
+        </td>
+      </tr>
+      `;
+
+    });
+
+    delegateTableBody.innerHTML = html;
+
+  } catch(err) {
+
+    console.error(err);
+
+  }
+
+}/* TODO: Wire icon-btn clicks to Firestore: update / delete /
+   `delegates/{id}` doc, plus reset clears `allocated`,`portfolio`.
+   Each action should also append a document to `adminActivityLogs`. */
+
+/* ============================================================
+   MOCK DATA — ALLOCATIONS
+   TODO: Replace with Firestore collection `allocations`
+   ============================================================ */
+
+/* ============================================================
+   ADD DELEGATE SLIDE-OVER
+   ============================================================ */
+const overlayMask = document.getElementById('overlayMask');
+const delegateSlideover = document.getElementById('delegateSlideover');
+
+function openSlideover(){
+  overlayMask.classList.add('show');
+  delegateSlideover.classList.add('show');
+}
+function closeSlideover(){
+  overlayMask.classList.remove('show');
+  delegateSlideover.classList.remove('show');
+}
+document.getElementById('addDelegateBtn').addEventListener('click', openSlideover);
+document.getElementById('closeSlideoverBtn').addEventListener('click', closeSlideover);
+document.getElementById('cancelDelegateBtn').addEventListener('click', closeSlideover);
+overlayMask.addEventListener('click', closeSlideover);
+
+document.getElementById('submitDelegateBtn').addEventListener('click', async () => {
+
+  const name = document.getElementById('delegateName').value.trim();
+  const phone = document.getElementById('delegatePhone').value.trim();
+  const dobInput = document.getElementById('delegateDob').value;
+  const committee = document.getElementById('delegateCommittee').value;
+  const email = document.getElementById('delegateEmail').value.trim();
+  const institution = document.getElementById('delegateInstitution').value.trim();
+
+  if (!name || !phone || !dobInput || !committee) {
+    alert("Please fill all required fields.");
+    return;
+  }
+
+  const dobParts = dobInput.split('-');
+
+  const dob =
+    dobParts[2] +
+    dobParts[1] +
+    dobParts[0];
+
+  try {
+
+    await setDoc(
+      window.doc(window.db, "delegates", phone),
+      {
+        name,
+        phone,
+        dob,
+
+        committeePreference: committee,
+
+        email,
+        institution,
+
+        allocated: false,
+        portfolio: "",
+
+        createdAt: serverTimestamp()
+      }
+    );
+    await addDoc(
+      collection(db, "adminActivityLogs"),
+      {
+        actor: currentAdminCode,
+        action: `Created delegate — ${name}`,
+        timestamp: serverTimestamp()
+      }
+    );
+    
+
+    alert("Delegate Added Successfully");
+
+    document.getElementById('delegateName').value = "";
+    document.getElementById('delegatePhone').value = "";
+    document.getElementById('delegateDob').value = "";
+    document.getElementById('delegateEmail').value = "";
+    document.getElementById('delegateInstitution').value = "";
+
+    closeSlideover();
+
+    loadDelegates();
+    loadActivityLogs();
+    loadOverviewMetrics();
+  } catch (err) {
+
+    console.error(err);
+
+    alert("Failed to add delegate");
+
+  }
+
+});
+
+/* ============================================================
+   DOWNLOAD BUTTONS (placeholders)
+   ============================================================ */
+document.getElementById('downloadCsvBtn').addEventListener('click', async () => {
+
+  try {
+
+    const snapshot = await getDocs(
+      collection(db, "delegates")
+    );
+
+    let csv =
+      "Name,Phone,DOB,Committee,Portfolio,Allocated,Email,Institution\n";
+
+    snapshot.forEach(docSnap => {
+
+      const d = docSnap.data();
+
+      csv += `"${d.name || ""}",`;
+      csv += `"${d.phone || ""}",`;
+      csv += `"${d.dob || ""}",`;
+      csv += `"${d.committeePreference || ""}",`;
+      csv += `"${d.portfolio || ""}",`;
+      csv += `"${d.allocated ? "Yes" : "No"}",`;
+      csv += `"${d.email || ""}",`;
+      csv += `"${d.institution || ""}"\n`;
+
+    });
+
+    const blob = new Blob(
+      [csv],
+      { type: "text/csv;charset=utf-8;" }
+    );
+
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+
+    link.download =
+      `munite-delegates-${Date.now()}.csv`;
+
+    link.click();
+
+  } catch(err) {
+
+    console.error(err);
+
+    alert("CSV Export Failed");
+
+  }
+
+});
+document.getElementById('downloadXlsBtn')
+.addEventListener('click', () => {
+
+  alert(
+    "Use CSV export for now. Excel export coming in V1.1."
+  );
+
+});
+document.getElementById('manualAssignBtn').addEventListener('click', () => {
+  // TODO: Open a manual assignment flow writing to `allocations` collection
+  alert('Manual assignment flow will write directly to the allocations collection.');
+});
+
+/* ============================================================
+   NOTIFICATIONS — priority picker + preview + publish
+   ============================================================ */
+const priorityOpts = document.querySelectorAll('.priority-opt');
+let selectedPriority = 'standard';
+priorityOpts.forEach(opt => {
+  opt.addEventListener('click', () => {
+    priorityOpts.forEach(o => o.classList.remove('sel'));
+    opt.classList.add('sel');
+    selectedPriority = opt.dataset.priority;
+  });
+});
+
+document.getElementById('previewBtn').addEventListener('click', () => {
+
+  console.log("Preview Clicked");
+
+  const title =
+    document.getElementById('notificationTitle').value.trim()
+    || 'Untitled Notification';
+
+  const message =
+    document.getElementById('notificationMessage').value.trim()
+    || 'No message body entered yet.';
+
+  console.log(title);
+  console.log(message);
+
+  document.getElementById('previewTitle').textContent = title;
+  document.getElementById('previewMessage').textContent = message;
+
+  document.getElementById('notificationPreview').style.display = 'block';
+
+});
+document.getElementById('publishBtn')
+.addEventListener('click', async () => {
+
+  const title =
+    document.getElementById('notificationTitle')
+    .value
+    .trim();
+
+  const message =
+    document.getElementById('notificationMessage')
+    .value
+    .trim();
+
+  const priority = selectedPriority;
+
+  if (!title || !message) {
+    alert("Please fill title and message.");
+    return;
+  }
+
+  try {
+
+    await addDoc(
+      collection(db, "notifications"),
+      {
+        title,
+        message,
+        priority,
+        createdBy: currentAdminCode,
+        createdAt: serverTimestamp()
+      }
+    );
+    await addDoc(
+      collection(db, "adminActivityLogs"),
+      {
+        actor: currentAdminCode,
+        action: `Published notification — ${title}`,
+        timestamp: serverTimestamp()
+      }
+    );
+    alert("Notification Published");
+
+    document.getElementById('notificationTitle').value = "";
+    document.getElementById('notificationMessage').value = "";
+    loadNotifications();
+    loadActivityLogs();
+    loadOverviewMetrics();
+  } catch (err) {
+
+    console.error(err);
+
+    alert("Failed to publish notification");
+
+  }
+
+});
+async function loadActivityLogs() {
+
+  try {
+
+    const snapshot = await getDocs(
+      collection(db, "adminActivityLogs")
+    );
+
+    const timeline =
+      document.getElementById("fullActivityTimeline");
+
+    let html = "";
+
+    snapshot.forEach(docSnap => {
+
+      const log = docSnap.data();
+
+      let timeText = "";
+
+      if (log.timestamp) {
+
+        timeText =
+          log.timestamp
+            .toDate()
+            .toLocaleString();
+
+      }
+
+      html += `
+      <li>
+        <span class="t-dot"></span>
+
+        <div class="t-body">
+
+          <p>
+            <strong>${log.actor}</strong>
+            ${log.action}
+          </p>
+
+          <span class="t-time">
+            ${timeText}
+          </span>
+
+        </div>
+      </li>
+      `;
+    });
+
+    timeline.innerHTML =
+      html || "<li>No activity yet.</li>";
+
+  } catch(err) {
+
+    console.error(err);
+
+  }
+
+}
+async function loadOverviewMetrics() {
+
+  try {
+
+    const delegatesSnapshot =
+      await getDocs(
+        collection(db, "delegates")
+      );
+
+    let totalDelegates = 0;
+    let allocatedDelegates = 0;
+
+    delegatesSnapshot.forEach(docSnap => {
+
+      totalDelegates++;
+
+      const d = docSnap.data();
+
+      if (d.allocated === true) {
+        allocatedDelegates++;
+      }
+
+    });
+
+    const pendingDelegates =
+      totalDelegates - allocatedDelegates;
+    const pct =
+      totalDelegates
+        ? Math.round(
+            allocatedDelegates /
+            totalDelegates * 100
+          )
+        : 0;
+    document.getElementById(
+      "allocationPercent"
+    ).textContent = `${pct}%`;
+    document.getElementById(
+      "allocationProgressText"
+    ).textContent =
+      `${allocatedDelegates} / ${totalDelegates} allocated`;
+    document.getElementById(
+      "totalDelegatesMetric"
+    ).textContent = totalDelegates;
+
+    document.getElementById(
+      "allocatedMetric"
+    ).textContent = allocatedDelegates;
+
+    document.getElementById(
+      "pendingMetric"
+    ).textContent = pendingDelegates;
+
+    const notificationsSnapshot =
+      await getDocs(
+        collection(db, "notifications")
+      );
+
+    document.getElementById(
+      "notificationMetric"
+    ).textContent =
+      notificationsSnapshot.size;
+
+  } catch(err) {
+
+    console.error(err);
+
+  }
+
+}
+async function loadAdminCodes() {
+
+  try {
+
+    const snapshot =
+      await getDocs(
+        collection(db, "adminCodes")
+      );
+
+    const grid =
+      document.getElementById(
+        "adminCodesGrid"
+      );
+
+    let html = "";
+
+    snapshot.forEach(docSnap => {
+
+      const code = docSnap.id;
+      const data = docSnap.data();
+
+      html += `
+      <div class="code-card">
+
+        <div class="cc-code">
+          ${code}
+        </div>
+
+        <div class="cc-meta">
+          ${data.active ? "ACTIVE" : "DISABLED"}
+        </div>
+
+        <span class="status-tag ${
+          data.active ? "active" : "disabled"
+        }"
+        style="margin-bottom:14px; display:inline-flex;">
+          ${data.active ? "Active" : "Disabled"}
+        </span>
+
+        <div class="cc-actions">
+
+          <button
+            class="btn btn-ghost btn-sm toggle-code-btn"
+            data-id="${code}"
+            data-active="${data.active}">
+            ${data.active ? "Disable" : "Enable"}
+          </button>
+
+          <button
+            class="btn btn-danger btn-sm delete-code-btn"
+            data-id="${code}">
+            Delete
+          </button>
+
+        </div>
+
+      </div>
+      `;
+    });
+
+    grid.innerHTML = html;
+
+  } catch(err) {
+
+    console.error(err);
+
+  }
+
+}
+async function loadOverviewActivity() {
+
+  const snapshot = await getDocs(
+    collection(db, "adminActivityLogs")
+  );
+
+  const feed =
+    document.getElementById("overviewActivityFeed");
+
+  let html = "";
+  let count = 0;
+
+  snapshot.forEach(docSnap => {
+
+    if (count >= 5) return;
+
+    const log = docSnap.data();
+
+    html += `
+      <li>
+        <span class="t-dot"></span>
+        <div class="t-body">
+          <p>
+            <strong>${log.actor}</strong>
+            ${log.action}
+          </p>
+          <span class="t-time">
+            ${log.timestamp
+              ? log.timestamp.toDate().toLocaleString()
+              : ""}
+          </span>
+        </div>
+      </li>
+    `;
+
+    count++;
+
+  });
+
+  feed.innerHTML = html;
+}
+loadNotifications();
+loadDelegates();
+loadActivityLogs();
+loadOverviewMetrics();
+loadAdminCodes();
+loadOverviewActivity();
+/* ============================================================
+   SETTINGS — Add Code (placeholder)
+   ============================================================ */
+document.getElementById('addCodeBtn')
+.addEventListener('click', async () => {
+
+  const code =
+    prompt("Enter admin code:");
+
+  if (!code) return;
+
+  await setDoc(
+    doc(
+      db,
+      "adminCodes",
+      code.toUpperCase()
+    ),
+    {
+      active: true,
+      createdAt: serverTimestamp()
+    }
+  );
+
+  await addDoc(
+    collection(db, "adminActivityLogs"),
+    {
+      actor: currentAdminCode,
+      action: `Created admin code — ${code.toUpperCase()}`,
+      timestamp: serverTimestamp()
+    }
+  );
+
+  loadAdminCodes();
+  loadActivityLogs();
+
+});
+document.addEventListener(
+  "click",
+  async (e) => {
+
+    const btn =
+      e.target.closest(
+        ".toggle-code-btn"
+      );
+
+    if (!btn) return;
+
+    const code =
+      btn.dataset.id;
+
+    const current =
+      btn.dataset.active === "true";
+
+    await updateDoc(
+      doc(db, "adminCodes", code),
+      {
+        active: !current
+      }
+    );
+
+    loadAdminCodes();
+
+});
+document.addEventListener(
+  "click",
+  async (e) => {
+
+    const btn =
+      e.target.closest(
+        ".delete-code-btn"
+      );
+
+    if (!btn) return;
+
+    const code =
+      btn.dataset.id;
+
+    if (
+      !confirm(
+        `Delete ${code}?`
+      )
+    ) return;
+
+    await deleteDoc(
+      doc(
+        db,
+        "adminCodes",
+        code
+      )
+    );
+
+    loadAdminCodes();
+
+});
+/* ============================================================
+   FIREBASE INTEGRATION — GLOBAL PLACEHOLDER
+   ============================================================ */
+// TODO: import { initializeApp } from "firebase/app";
+// TODO: import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot } from "firebase/firestore";
+// TODO: const firebaseConfig = { /* ... */ };
+// TODO: const app = initializeApp(firebaseConfig);
+// TODO: const db = getFirestore(app);
+// TODO: Track currentAdminCode from session (set during index.html authentication) for use in activity logging throughout this file.
+</script>
+</body>
+</html>

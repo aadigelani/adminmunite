@@ -878,20 +878,20 @@ tbody tr:last-child td{ border-bottom:none; }
         <div class="toolbar-left">
           <div class="search-wrap">
             <span class="ic">&#8981;</span>
-            <input class="input" type="text" placeholder="Search by name or phone&hellip;">
+            <input class="input" type="text" id="delegateSearchInput" placeholder="Search by name, phone, committee, email, institution&hellip;">
           </div>
-          <select class="select">
-            <option>All Committees</option>
-            <option>UNSC</option>
-            <option>UNHRC</option>
-            <option>DISEC</option>
-            <option>ECOSOC</option>
-            <option>Lok Sabha</option>
+          <select class="select" id="committeeFilterSelect">
+            <option value="">All Committees</option>
+            <option value="UNSC">UNSC</option>
+            <option value="UNHRC">UNHRC</option>
+            <option value="DISEC">DISEC</option>
+            <option value="ECOSOC">ECOSOC</option>
+            <option value="Lok Sabha">Lok Sabha</option>
           </select>
-          <select class="select">
-            <option>All Statuses</option>
-            <option>Allocated</option>
-            <option>Pending</option>
+          <select class="select" id="statusFilterSelect">
+            <option value="">All Statuses</option>
+            <option value="allocated">Allocated</option>
+            <option value="pending">Pending</option>
           </select>
         </div>
         <div class="toolbar-right">
@@ -910,10 +910,9 @@ tbody tr:last-child td{ border-bottom:none; }
             </tr>
           </thead>
           <tbody id="delegateTableBody">
-            <!-- Rows populated with mock data via JS; replace with Firestore query on /delegates -->
           </tbody>
         </table>
-        <div class="table-footnote">Showing 8 of 312 delegates &middot; mock data, replace with live Firestore collection <code>delegates</code></div>
+        <div class="table-footnote" id="delegateTableFootnote">Loading delegates&hellip;</div>
       </div>
     </section>
 
@@ -1061,11 +1060,7 @@ tbody tr:last-child td{ border-bottom:none; }
         <div class="table-wrap" style="border:none;">
           <table>
             <thead><tr><th>Code Used</th><th>Timestamp</th><th>Device</th><th>Status</th></tr></thead>
-            <tbody>
-              <tr><td class="cell-name">ALPHA</td><td class="cell-mono">20 Jun 2026, 09:41 IST</td><td>Chrome &middot; macOS</td><td><span class="status-tag allocated">Success</span></td></tr>
-              <tr><td class="cell-name">ECHO</td><td class="cell-mono">19 Jun 2026, 19:03 IST</td><td>Safari &middot; iOS</td><td><span class="status-tag allocated">Success</span></td></tr>
-              <tr><td class="cell-name">FOXTROT</td><td class="cell-mono">19 Jun 2026, 14:51 IST</td><td>Chrome &middot; Windows</td><td><span class="status-tag disabled">Rejected</span></td></tr>
-              <tr><td class="cell-name">CHARLIE</td><td class="cell-mono">18 Jun 2026, 21:30 IST</td><td>Firefox &middot; Windows</td><td><span class="status-tag allocated">Success</span></td></tr>
+            <tbody id="loginHistoryTableBody">
             </tbody>
           </table>
         </div>
@@ -1092,15 +1087,9 @@ tbody tr:last-child td{ border-bottom:none; }
       <label>Name</label>
       <input id="delegateName" class="input" type="text" placeholder="Full legal name">
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Phone Number</label>
-        <input id="delegatePhone" class="input" type="tel" placeholder="+91 00000 00000">
-      </div>
-      <div class="field">
-        <label>Date of Birth</label>
-        <input id="delegateDob" class="input" type="date">
-      </div>
+    <div class="field">
+      <label>Phone Number</label>
+      <input id="delegatePhone" class="input" type="tel" placeholder="+91 00000 00000">
     </div>
     <div class="field">
       <label>Committee Preference</label>
@@ -1126,9 +1115,19 @@ tbody tr:last-child td{ border-bottom:none; }
     <button class="btn btn-ghost" id="cancelDelegateBtn">Cancel</button>
     <button class="btn btn-primary" id="submitDelegateBtn">Add Delegate</button>
   </div>
-  <!-- TODO: On submit, write new document to Firestore collection `delegates`
-       { name, phone, dob, committeePreference, email, institution, allocated:false, createdAt: serverTimestamp() }
-       Then write entry to `adminActivityLogs`: "{adminCode} created delegate — {name}" -->
+</div>
+
+<!-- VIEW DELEGATE SLIDE-OVER -->
+<div class="slideover" id="viewDelegateSlideover" style="z-index:96;">
+  <div class="slideover-head">
+    <div>
+      <h3>Delegate Record</h3>
+      <p>Read-only secretariat view</p>
+    </div>
+    <button class="close-x" id="closeViewSlideoverBtn">&#10005;</button>
+  </div>
+  <div class="slideover-body" id="viewSlideoverBody">
+  </div>
 </div>
 <script type="module">
 
@@ -1294,80 +1293,139 @@ async function loadNotifications() {
   }
 
 }
+let allDelegatesCache = [];
+
+function renderDelegateTable(delegates) {
+  let html = "";
+  delegates.forEach(({ id, d }) => {
+    const createdAt = d.createdAt ? d.createdAt.toDate().toLocaleDateString() : "-";
+    html += `
+    <tr>
+      <td class="cell-name">${d.name || ""}</td>
+      <td class="cell-mono">${d.phone || ""}</td>
+      <td class="cell-mono">${d.dob || "-"}</td>
+      <td>${d.committeePreference || ""}</td>
+      <td>${d.portfolio || "-"}</td>
+      <td>${d.allocated ? '<span class="status-tag allocated">Allocated</span>' : '<span class="status-tag pending">Pending</span>'}</td>
+      <td class="cell-mono">${createdAt}</td>
+      <td>
+        <div class="action-row">
+          <button class="icon-btn view-btn" data-id="${id}">👁</button>
+          <button class="icon-btn edit-btn" data-id="${id}">✎</button>
+          <button class="icon-btn danger delete-btn" data-id="${id}">🗑</button>
+        </div>
+      </td>
+    </tr>
+    `;
+  });
+  delegateTableBody.innerHTML = html || "<tr><td colspan='8' style='text-align:center;color:var(--ivory-faint);padding:24px;'>No delegates found.</td></tr>";
+  document.getElementById("delegateTableFootnote").textContent = `Showing ${delegates.length} delegate${delegates.length !== 1 ? "s" : ""}`;
+}
+
+function applyDelegateFilters() {
+  const search = document.getElementById("delegateSearchInput").value.trim().toLowerCase();
+  const committee = document.getElementById("committeeFilterSelect").value;
+  const status = document.getElementById("statusFilterSelect").value;
+  const filtered = allDelegatesCache.filter(({ d }) => {
+    const matchSearch = !search || [d.name, d.phone, d.committeePreference, d.email, d.institution].some(v => (v || "").toLowerCase().includes(search));
+    const matchCommittee = !committee || (d.committeePreference || "") === committee;
+    const matchStatus = !status || (status === "allocated" ? d.allocated === true : d.allocated !== true);
+    return matchSearch && matchCommittee && matchStatus;
+  });
+  renderDelegateTable(filtered);
+}
+
+document.getElementById("delegateSearchInput").addEventListener("input", applyDelegateFilters);
+document.getElementById("committeeFilterSelect").addEventListener("change", applyDelegateFilters);
+document.getElementById("statusFilterSelect").addEventListener("change", applyDelegateFilters);
+
 async function loadDelegates() {
-
   try {
-
-    const snapshot = await window.getDocs(
-      collection(window.db, "delegates")
-    );
-
-    let html = "";
-
+    const snapshot = await window.getDocs(collection(window.db, "delegates"));
+    allDelegatesCache = [];
     snapshot.forEach(docSnap => {
-
-      const d = docSnap.data();
-
-      html += `
-      <tr>
-        <td class="cell-name">${d.name || ""}</td>
-        <td class="cell-mono">${d.phone || ""}</td>
-        <td class="cell-mono">${d.dob || ""}</td>
-        <td>${d.committeePreference || ""}</td>
-        <td>${d.portfolio || "-"}</td>
-
-        <td>
-          ${
-            d.allocated
-              ? '<span class="status-tag allocated">Allocated</span>'
-              : '<span class="status-tag pending">Pending</span>'
-          }
-        </td>
-
-        <td class="cell-mono">
-          -
-        </td>
-
-        <td>
-          <div class="action-row">
-
-            <button
-              class="icon-btn view-btn"
-              data-id="${docSnap.id}">
-              👁
-            </button>
-
-            <button
-              class="icon-btn edit-btn"
-              data-id="${docSnap.id}">
-              ✎
-            </button>
-
-            <button
-              class="icon-btn danger delete-btn"
-              data-id="${docSnap.id}">
-              🗑
-            </button>
-
-          </div>
-        </td>
-      </tr>
-      `;
-
+      allDelegatesCache.push({ id: docSnap.id, d: docSnap.data() });
     });
-
-    delegateTableBody.innerHTML = html;
-
+    applyDelegateFilters();
   } catch(err) {
-
     console.error(err);
+  }
+}
 
+document.addEventListener("click", async (e) => {
+  const viewBtn = e.target.closest(".view-btn");
+  if (viewBtn) {
+    const id = viewBtn.dataset.id;
+    const entry = allDelegatesCache.find(x => x.id === id);
+    if (!entry) return;
+    const d = entry.d;
+    const createdAt = d.createdAt ? d.createdAt.toDate().toLocaleString() : "-";
+    document.getElementById("viewSlideoverBody").innerHTML = `
+      <div class="field"><label>Name</label><div style="padding:9px 12px;background:var(--black);border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--ivory);font-size:13px;">${d.name || "-"}</div></div>
+      <div class="field"><label>Phone</label><div style="padding:9px 12px;background:var(--black);border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--ivory);font-size:13px;">${d.phone || "-"}</div></div>
+      <div class="field"><label>Date of Birth</label><div style="padding:9px 12px;background:var(--black);border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--ivory);font-size:13px;">${d.dob || "-"}</div></div>
+      <div class="field"><label>Committee</label><div style="padding:9px 12px;background:var(--black);border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--ivory);font-size:13px;">${d.committeePreference || "-"}</div></div>
+      <div class="field"><label>Portfolio</label><div style="padding:9px 12px;background:var(--black);border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--ivory);font-size:13px;">${d.portfolio || "-"}</div></div>
+      <div class="field"><label>Allocation</label><div style="padding:9px 12px;background:var(--black);border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--ivory);font-size:13px;">${d.allocated ? "Allocated" : "Pending"}</div></div>
+      <div class="field"><label>Email</label><div style="padding:9px 12px;background:var(--black);border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--ivory);font-size:13px;">${d.email || "-"}</div></div>
+      <div class="field"><label>Institution</label><div style="padding:9px 12px;background:var(--black);border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--ivory);font-size:13px;">${d.institution || "-"}</div></div>
+      <div class="field"><label>Registered</label><div style="padding:9px 12px;background:var(--black);border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--ivory);font-size:13px;">${d.isRegistered ? "Yes" : "No"}</div></div>
+      <div class="field"><label>Created</label><div style="padding:9px 12px;background:var(--black);border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--ivory);font-size:13px;">${createdAt}</div></div>
+    `;
+    document.getElementById("overlayMask").classList.add("show");
+    document.getElementById("viewDelegateSlideover").classList.add("show");
+    return;
   }
 
-}/* TODO: Wire icon-btn clicks to Firestore: update / delete /
-   `delegates/{id}` doc, plus reset clears `allocated`,`portfolio`.
-   Each action should also append a document to `adminActivityLogs`. */
+  const editBtn = e.target.closest(".edit-btn");
+  if (editBtn) {
+    const id = editBtn.dataset.id;
+    const entry = allDelegatesCache.find(x => x.id === id);
+    if (!entry) return;
+    const d = entry.d;
+    document.querySelector("#delegateSlideover .slideover-head h3").textContent = "Edit Delegate";
+    document.querySelector("#delegateSlideover .slideover-head p").textContent = "Update delegate record";
+    document.getElementById("submitDelegateBtn").textContent = "Save Changes";
+    document.getElementById("delegateName").value = d.name || "";
+    document.getElementById("delegatePhone").value = d.phone || "";
+    document.getElementById("delegatePhone").readOnly = true;
+    document.getElementById("delegatePhone").style.opacity = "0.5";
+    document.getElementById("delegateCommittee").value = d.committeePreference || "";
+    document.getElementById("delegateEmail").value = d.email || "";
+    document.getElementById("delegateInstitution").value = d.institution || "";
+    document.getElementById("delegateSlideover").dataset.editId = id;
+    document.getElementById("delegateSlideover").dataset.editName = d.name || "";
+    document.getElementById("overlayMask").classList.add("show");
+    document.getElementById("delegateSlideover").classList.add("show");
+    return;
+  }
 
+  const deleteBtn = e.target.closest(".delete-btn");
+  if (deleteBtn) {
+    const id = deleteBtn.dataset.id;
+    const entry = allDelegatesCache.find(x => x.id === id);
+    if (!entry) return;
+    const name = entry.d.name || id;
+    const confirmed = confirm(`Delete delegate "${name}"?\n\nThis action cannot be undone.`);
+    if (!confirmed) return;
+    try {
+      await deleteDoc(doc(db, "delegates", id));
+      await addDoc(collection(db, "adminActivityLogs"), {
+        actor: currentAdminCode,
+        action: `Deleted delegate — ${name}`,
+        timestamp: serverTimestamp()
+      });
+      loadDelegates();
+      loadActivityLogs();
+      loadOverviewMetrics();
+      loadOverviewActivity();
+    } catch(err) {
+      console.error(err);
+      alert("Failed to delete delegate.");
+    }
+    return;
+  }
+});
 /* ============================================================
    MOCK DATA — ALLOCATIONS
    TODO: Replace with Firestore collection `allocations`
@@ -1387,49 +1445,97 @@ function closeSlideover(){
   overlayMask.classList.remove('show');
   delegateSlideover.classList.remove('show');
 }
-document.getElementById('addDelegateBtn').addEventListener('click', openSlideover);
-document.getElementById('closeSlideoverBtn').addEventListener('click', closeSlideover);
-document.getElementById('cancelDelegateBtn').addEventListener('click', closeSlideover);
-overlayMask.addEventListener('click', closeSlideover);
+function resetSlideover() {
+  document.querySelector("#delegateSlideover .slideover-head h3").textContent = "Add Delegate";
+  document.querySelector("#delegateSlideover .slideover-head p").textContent = "New registration entry";
+  document.getElementById("submitDelegateBtn").textContent = "Add Delegate";
+  document.getElementById("delegatePhone").readOnly = false;
+  document.getElementById("delegatePhone").style.opacity = "1";
+  delete document.getElementById("delegateSlideover").dataset.editId;
+  delete document.getElementById("delegateSlideover").dataset.editName;
+}
 
+document.getElementById('addDelegateBtn').addEventListener('click', () => {
+  resetSlideover();
+  openSlideover();
+});
+document.getElementById('closeSlideoverBtn').addEventListener('click', () => {
+  closeSlideover();
+  resetSlideover();
+});
+document.getElementById('cancelDelegateBtn').addEventListener('click', () => {
+  closeSlideover();
+  resetSlideover();
+});
+overlayMask.addEventListener('click', () => {
+  closeSlideover();
+  resetSlideover();
+  document.getElementById("viewDelegateSlideover").classList.remove("show");
+});
+document.getElementById('closeViewSlideoverBtn').addEventListener('click', () => {
+  document.getElementById("overlayMask").classList.remove("show");
+  document.getElementById("viewDelegateSlideover").classList.remove("show");
+});
 document.getElementById('submitDelegateBtn').addEventListener('click', async () => {
+
+  const slideoverEl = document.getElementById("delegateSlideover");
+  const editId = slideoverEl.dataset.editId;
 
   const name = document.getElementById('delegateName').value.trim();
   const phone = document.getElementById('delegatePhone').value.trim();
-  const dobInput = document.getElementById('delegateDob').value;
   const committee = document.getElementById('delegateCommittee').value;
   const email = document.getElementById('delegateEmail').value.trim();
   const institution = document.getElementById('delegateInstitution').value.trim();
 
-  if (!name || !phone || !dobInput || !committee) {
+  if (!name || !phone || !committee) {
     alert("Please fill all required fields.");
     return;
   }
 
-  const dobParts = dobInput.split('-');
-
-  const dob =
-    dobParts[2] +
-    dobParts[1] +
-    dobParts[0];
+  if (editId) {
+    try {
+      await updateDoc(doc(db, "delegates", editId), {
+        name,
+        committeePreference: committee,
+        email,
+        institution
+      });
+      await addDoc(collection(db, "adminActivityLogs"), {
+        actor: currentAdminCode,
+        action: `Edited delegate — ${name}`,
+        timestamp: serverTimestamp()
+      });
+      alert("Delegate updated successfully.");
+      document.getElementById('delegateName').value = "";
+      document.getElementById('delegatePhone').value = "";
+      document.getElementById('delegateEmail').value = "";
+      document.getElementById('delegateInstitution').value = "";
+      resetSlideover();
+      closeSlideover();
+      loadDelegates();
+      loadActivityLogs();
+      loadOverviewMetrics();
+      loadOverviewActivity();
+    } catch(err) {
+      console.error(err);
+      alert("Failed to update delegate.");
+    }
+    return;
+  }
 
   try {
-
     await setDoc(
       window.doc(window.db, "delegates", phone),
       {
         name,
         phone,
-        dob,
-
+        dob: "",
+        isRegistered: false,
         committeePreference: committee,
-
         email,
         institution,
-
         allocated: false,
         portfolio: "",
-
         createdAt: serverTimestamp()
       }
     );
@@ -1441,13 +1547,11 @@ document.getElementById('submitDelegateBtn').addEventListener('click', async () 
         timestamp: serverTimestamp()
       }
     );
-    
 
     alert("Delegate Added Successfully");
 
     document.getElementById('delegateName').value = "";
     document.getElementById('delegatePhone').value = "";
-    document.getElementById('delegateDob').value = "";
     document.getElementById('delegateEmail').value = "";
     document.getElementById('delegateInstitution').value = "";
 
@@ -1456,16 +1560,13 @@ document.getElementById('submitDelegateBtn').addEventListener('click', async () 
     loadDelegates();
     loadActivityLogs();
     loadOverviewMetrics();
+    loadOverviewActivity();
   } catch (err) {
-
     console.error(err);
-
     alert("Failed to add delegate");
-
   }
 
 });
-
 /* ============================================================
    DOWNLOAD BUTTONS (placeholders)
    ============================================================ */
@@ -1864,6 +1965,36 @@ loadActivityLogs();
 loadOverviewMetrics();
 loadAdminCodes();
 loadOverviewActivity();
+loadLoginHistory();
+
+async function loadLoginHistory() {
+  try {
+    const snapshot = await getDocs(collection(db, "adminLoginHistory"));
+    const tbody = document.getElementById("loginHistoryTableBody");
+    const rows = [];
+    snapshot.forEach(docSnap => { rows.push(docSnap.data()); });
+    rows.sort((a, b) => {
+      const ta = a.timestamp ? a.timestamp.toMillis() : 0;
+      const tb = b.timestamp ? b.timestamp.toMillis() : 0;
+      return tb - ta;
+    });
+    let html = "";
+    rows.forEach(log => {
+      const ts = log.timestamp ? log.timestamp.toDate().toLocaleString() : "-";
+      const statusClass = log.status === "success" ? "allocated" : "disabled";
+      const statusLabel = log.status === "success" ? "Success" : "Rejected";
+      html += `<tr>
+        <td class="cell-name">${log.adminCode || "-"}</td>
+        <td class="cell-mono">${ts}</td>
+        <td>-</td>
+        <td><span class="status-tag ${statusClass}">${statusLabel}</span></td>
+      </tr>`;
+    });
+    tbody.innerHTML = html || "<tr><td colspan='4' style='text-align:center;color:var(--ivory-faint);padding:16px;'>No login history.</td></tr>";
+  } catch(err) {
+    console.error(err);
+  }
+}
 /* ============================================================
    SETTINGS — Add Code (placeholder)
    ============================================================ */

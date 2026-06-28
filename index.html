@@ -120,7 +120,7 @@
   }
 
   #munite-logo-placeholder{
-    width:96px;height:96px;
+    width:50px;height:50px;
     border:1px solid rgba(212,175,55,0.4);
     border-radius:50%;
     margin-bottom:30px;
@@ -329,17 +329,81 @@
     text-align:center;
   }
   .munite-logo{
-    width: 500px;
-    height: 500px;
-    object-fit: contain;
-    display: block;
-    margin: 0 auto 14px;
+    width:clamp(60px,14vw,100px);
+    aspect-ratio:1;
+    object-fit:contain;
+    display:block;
+    margin:0 auto clamp(16px,3vw,28px);
+    user-select:none;
+    pointer-events:none;
+    filter:
+        drop-shadow(0 0 12px rgba(212,175,55,.12))
+        drop-shadow(0 0 28px rgba(109,40,217,.08));
+    transition:transform .35s ease;
+  }
+
+  .munite-logo:hover{
+      transform:scale(1.03);
   }
   /* responsive */
   @media (max-width:560px){
-    .code-input{font-size:20px;letter-spacing:0.35em;}
-    .subtitle{letter-spacing:0.2em;font-size:12px;}
-    .panel-label{letter-spacing:0.25em;}
+
+    .stage{
+        padding:40px 18px 56px;
+    }
+
+    .munite-logo{
+        width:68px;
+        margin-bottom:20px;
+    }
+
+    .eyebrow{
+        font-size:9px;
+        letter-spacing:.28em;
+        margin-bottom:18px;
+    }
+
+    .title{
+        font-size:34px;
+        letter-spacing:.08em;
+    }
+
+    .subtitle{
+        font-size:11px;
+        letter-spacing:.18em;
+        margin-top:12px;
+    }
+
+    .divider{
+        margin:28px 0;
+        height:42px;
+    }
+
+    .panel-label{
+        font-size:10px;
+        letter-spacing:.22em;
+        margin-bottom:16px;
+    }
+
+    .code-input{
+        font-size:18px;
+        letter-spacing:.22em;
+        padding:12px 6px 16px;
+    }
+
+    .verify-btn{
+        width:100%;
+        padding:15px 20px;
+        letter-spacing:.22em;
+    }
+
+    .footnote{
+        margin-top:36px;
+        font-size:9px;
+        letter-spacing:.14em;
+        line-height:1.7;
+    }
+
   }
 
   /* reduced motion */

@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MUNITE &middot; Secretariat Command</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -702,6 +703,309 @@ tbody tr:last-child td{ border-bottom:none; }
   margin: 0 auto 14px;
 }
 /* ============================================================
+   BULK DELEGATE IMPORT — Section Styles
+   ============================================================ */
+.bulk-import-header{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  flex-wrap:wrap; gap:16px; margin-bottom:28px;
+}
+.bulk-desc{
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--ivory-dim);
+  margin: 6px 0 0;
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+.drop-zone{
+  border: 2px dashed var(--purple-line);
+  border-radius: var(--radius);
+  background: linear-gradient(165deg, rgba(47,15,77,0.4), rgba(12,7,16,0.6));
+  padding: 60px 40px;
+  text-align:center;
+  cursor:pointer;
+  transition: all .25s ease;
+  position:relative;
+}
+.drop-zone:hover, .drop-zone.drag-over{
+  border-color: var(--gold-dim);
+  background: linear-gradient(165deg, rgba(200,160,66,0.06), rgba(47,15,77,0.4));
+  box-shadow: inset 0 0 40px rgba(200,160,66,0.04);
+}
+.drop-zone .dz-icon{
+  font-size: 48px;
+  margin-bottom: 16px;
+  display:block;
+  opacity:.6;
+}
+.drop-zone .dz-title{
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  color: var(--ivory);
+  margin-bottom: 8px;
+}
+.drop-zone .dz-sub{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--ivory-faint);
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+.drop-zone input[type="file"]{ display:none; }
+
+.file-info-card{
+  display:none;
+  background: var(--purple-deep);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-top: 16px;
+  display:none;
+  align-items:center;
+  gap:18px;
+  animation: fade-in .3s ease;
+}
+.file-info-card.show{ display:flex; }
+.fi-icon{ font-size: 30px; flex-shrink:0; }
+.fi-details{ flex:1; }
+.fi-name{
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--ivory);
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.fi-meta{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ivory-faint);
+  text-transform: uppercase;
+}
+.fi-ready{
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 4px 12px;
+  border: 1px solid rgba(75,122,94,0.5);
+  border-radius: 20px;
+  background: rgba(75,122,94,0.1);
+  color: #9fd6b3;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.validation-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.val-card{
+  background: var(--purple-deep);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  padding: 18px 18px 16px;
+  position:relative;
+  overflow:hidden;
+  animation: fade-in .4s ease;
+}
+.val-card::before{
+  content:'';
+  position:absolute; top:0; left:0; right:0; height: 2px;
+  opacity:.6;
+}
+.val-card.vc-total::before{ background: linear-gradient(90deg, transparent, var(--gold-bright), transparent); }
+.val-card.vc-ready::before{ background: linear-gradient(90deg, transparent, #4b7a5e, transparent); }
+.val-card.vc-warn::before{ background: linear-gradient(90deg, transparent, #c8872a, transparent); }
+.val-card.vc-err::before{ background: linear-gradient(90deg, transparent, var(--red-status), transparent); }
+.val-card .vc-label{
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+  margin-bottom: 8px;
+}
+.val-card .vc-value{
+  font-family: var(--font-display);
+  font-size: 36px;
+  color: var(--ivory);
+  line-height:1;
+  margin-bottom: 4px;
+}
+.val-card.vc-ready .vc-value{ color: #9fd6b3; }
+.val-card.vc-warn .vc-value{ color: var(--gold-bright); }
+.val-card.vc-err .vc-value{ color: #d18a8a; }
+.val-card .vc-foot{
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--ivory-faint);
+}
+
+.filter-tabs{
+  display:flex; gap:6px; margin-bottom: 14px; flex-wrap:wrap;
+}
+.filter-tab{
+  padding: 6px 14px;
+  border: 1px solid var(--purple-line);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--ivory-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all .15s ease;
+}
+.filter-tab:hover{ border-color: var(--gold-dim); color: var(--gold-bright); }
+.filter-tab.active{
+  background: rgba(200,160,66,0.1);
+  border-color: var(--gold-bright);
+  color: var(--gold-bright);
+}
+
+.import-status-tag{
+  display:inline-flex; align-items:center; gap:5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.ist-ready{ color: #9fd6b3; border-color: rgba(75,122,94,0.5); background: rgba(75,122,94,0.08); }
+.ist-dup{ color: var(--gold-bright); border-color: rgba(200,160,66,0.4); background: rgba(200,160,66,0.06); }
+.ist-err{ color: #d18a8a; border-color: rgba(156,59,59,0.4); background: rgba(156,59,59,0.08); }
+
+.suggest-pill{
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 3px 10px;
+  border: 1px solid rgba(200,160,66,0.3);
+  border-radius: 20px;
+  background: rgba(200,160,66,0.05);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--gold-dim);
+  letter-spacing: 0.04em;
+  cursor:pointer;
+  transition: all .15s ease;
+}
+.suggest-pill:hover{ border-color: var(--gold-bright); color: var(--gold-bright); background: rgba(200,160,66,0.1); }
+.suggest-pill .sp-apply-all{
+  padding: 1px 6px;
+  border: 1px solid rgba(200,160,66,0.4);
+  border-radius: 10px;
+  font-size: 8px;
+  cursor:pointer;
+  transition: all .15s ease;
+}
+.suggest-pill .sp-apply-all:hover{ background: rgba(200,160,66,0.15); border-color: var(--gold-bright); }
+
+.progress-bar-wrap{
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(200,160,66,0.1);
+  border-radius: 4px;
+  height: 10px;
+  overflow:hidden;
+  margin: 12px 0;
+}
+.progress-bar-fill{
+  height:100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright));
+  border-radius: 4px;
+  transition: width .3s ease;
+  position:relative;
+  overflow:hidden;
+}
+.progress-bar-fill::after{
+  content:'';
+  position:absolute; inset:0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer{ 0%{transform:translateX(-100%);} 100%{transform:translateX(100%);} }
+
+.import-summary-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.import-summary-card{
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align:center;
+  border: 1px solid;
+  animation: fade-in .4s ease;
+}
+.isc-imported{ border-color: rgba(75,122,94,0.4); background: rgba(75,122,94,0.07); }
+.isc-skipped{ border-color: rgba(200,160,66,0.35); background: rgba(200,160,66,0.05); }
+.isc-failed{ border-color: rgba(156,59,59,0.35); background: rgba(156,59,59,0.06); }
+.import-summary-card .isc-num{
+  font-family: var(--font-display);
+  font-size: 38px;
+  line-height:1;
+  margin-bottom:6px;
+}
+.isc-imported .isc-num{ color: #9fd6b3; }
+.isc-skipped .isc-num{ color: var(--gold-bright); }
+.isc-failed .isc-num{ color: #d18a8a; }
+.import-summary-card .isc-label{
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+}
+
+.history-table-wrap{
+  background: var(--purple-deep);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  overflow-x:auto;
+  margin-top: 18px;
+}
+
+/* Edit Modal */
+.edit-modal-mask{
+  position:fixed; inset:0;
+  background: rgba(8,4,14,0.78);
+  backdrop-filter: blur(3px);
+  z-index:200;
+  display:none; align-items:center; justify-content:center;
+}
+.edit-modal-mask.show{ display:flex; }
+.edit-modal{
+  background: linear-gradient(180deg, var(--purple-deep), #160826);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  width: 480px; max-width: 94vw;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  animation: fade-in .25s ease;
+}
+.edit-modal-head{
+  padding: 22px 26px 16px;
+  border-bottom: 1px solid rgba(200,160,66,0.18);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.edit-modal-head h3{
+  font-family: var(--font-display);
+  font-size: 20px;
+  margin:0;
+  color: var(--ivory);
+  letter-spacing: 0.04em;
+}
+.edit-modal-body{ padding: 22px 26px; }
+.edit-modal-foot{
+  padding: 14px 26px 22px;
+  display:flex; gap:10px; justify-content:flex-end;
+  border-top: 1px solid rgba(200,160,66,0.12);
+}
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 1100px){
@@ -722,7 +1026,43 @@ tbody tr:last-child td{ border-bottom:none; }
 </style>
 </head>
 <body>
+<!-- ================= BULK IMPORT EDIT MODAL ================= -->
+<div class="edit-modal-mask" id="biEditModalMask">
+  <div class="edit-modal">
+    <div class="edit-modal-head">
+      <h3>Edit Row</h3>
+      <button class="close-x" id="biEditModalClose">&#215;</button>
+    </div>
+    <div class="edit-modal-body">
+      <input type="hidden" id="biEditRowIndex">
+      <div class="field">
+        <label>Full Name</label>
+        <input class="input" type="text" id="biEditName" placeholder="Full name">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Phone</label>
+          <input class="input" type="text" id="biEditPhone" placeholder="Phone number">
+        </div>
+        <div class="field">
+          <label>Institution</label>
+          <input class="input" type="text" id="biEditInstitution" placeholder="School / College">
+        </div>
+      </div>
+      <div class="field">
+        <label>Committee</label>
+        <input class="input" type="text" id="biEditCommittee" placeholder="Committee name">
+        <div class="field-hint" id="biEditCommitteeSuggest" style="margin-top:8px;"></div>
+      </div>
+    </div>
+    <div class="edit-modal-foot">
+      <button class="btn btn-ghost" id="biEditCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="biEditSaveBtn">Save &amp; Revalidate</button>
+    </div>
+  </div>
+</div>
 
+<!-- ================= MOBILE TOP BAR ================= -->
 <!-- ================= MOBILE TOP BAR ================= -->
 <div class="mobile-bar">
   <p class="brand-name">MUNITE</p>
@@ -760,6 +1100,7 @@ tbody tr:last-child td{ border-bottom:none; }
       <p class="nav-eyebrow">Records</p>
       <button class="nav-item" data-section="logs"><span class="glyph">&#9776;</span> Activity Logs</button>
       <button class="nav-item" data-section="settings"><span class="glyph">&#9881;</span> Settings</button>
+      <button class="nav-item" data-section="bulkimport"><span class="glyph">&#8659;</span> Bulk Import</button>
     </nav>
 
     <div class="sidebar-footer">
@@ -776,7 +1117,194 @@ tbody tr:last-child td{ border-bottom:none; }
 
   <!-- ================= WORKSPACE ================= -->
   <main class="workspace">
+    <!-- ============ BULK DELEGATE IMPORT ============ -->
+    <section class="section" id="sec-bulkimport">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Secretariat Command &middot; Delegate Affairs</p>
+          <h1>Bulk Delegate Import</h1>
+          <p class="bulk-desc">Upload a spreadsheet to register multiple delegates in a single operation.</p>
+        </div>
+        <div class="meta"><strong>MUNITE 2026</strong><br>Validated batch write via Firestore</div>
+      </div>
 
+      <!-- Step 1: Upload -->
+      <div class="panel" id="bi-upload-panel">
+        <div class="panel-head">
+          <div>
+            <p class="panel-title">Upload Spreadsheet</p>
+            <p class="panel-sub">Accepted formats — .xlsx &nbsp;/&nbsp; .csv</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="biDownloadTemplateBtn">&#8595; Download Template</button>
+        </div>
+
+        <div class="drop-zone" id="biDropZone">
+          <span class="dz-icon">&#128450;</span>
+          <div class="dz-title">Drag &amp; Drop Your File Here</div>
+          <div class="dz-sub">or click to browse from your device</div>
+          <button class="btn btn-ghost" id="biBrowseBtn">Browse File</button>
+          <input type="file" id="biFileInput" accept=".xlsx,.csv">
+        </div>
+
+        <div class="file-info-card" id="biFileInfo">
+          <div class="fi-icon">&#128196;</div>
+          <div class="fi-details">
+            <div class="fi-name" id="biFileName">—</div>
+            <div class="fi-meta" id="biFileMeta">—</div>
+          </div>
+          <span class="fi-ready">&#9679; File Ready</span>
+        </div>
+
+        <div style="margin-top:20px; display:flex; gap:12px; align-items:center;">
+          <button class="btn btn-primary" id="biValidateBtn" style="display:none;">&#10003; Validate Spreadsheet</button>
+          <span id="biValidatingSpinner" style="display:none; font-family:var(--font-mono); font-size:11px; color:var(--gold-dim); letter-spacing:0.1em;">VALIDATING…</span>
+        </div>
+      </div>
+
+      <!-- Step 2: Validation Summary -->
+      <div id="bi-validation-section" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-title">Validation Summary</p>
+              <p class="panel-sub">Review all rows before importing</p>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button class="btn btn-ghost btn-sm" id="biResetBtn">&#8634; Reset</button>
+              <button class="btn btn-primary" id="biImportBtn">&#8679; Import Delegates</button>
+            </div>
+          </div>
+
+          <div class="validation-grid" id="biValGrid">
+            <div class="val-card vc-total">
+              <div class="vc-label">Total Rows</div>
+              <div class="vc-value" id="vcTotal">0</div>
+              <div class="vc-foot">Detected in file</div>
+            </div>
+            <div class="val-card vc-ready">
+              <div class="vc-label">Ready</div>
+              <div class="vc-value" id="vcReady">0</div>
+              <div class="vc-foot">Will be imported</div>
+            </div>
+            <div class="val-card vc-warn">
+              <div class="vc-label">Duplicate Phones</div>
+              <div class="vc-value" id="vcDup">0</div>
+              <div class="vc-foot">Skipped on import</div>
+            </div>
+            <div class="val-card vc-err">
+              <div class="vc-label">Invalid Committee</div>
+              <div class="vc-value" id="vcBadCom">0</div>
+              <div class="vc-foot">Needs correction</div>
+            </div>
+            <div class="val-card vc-err">
+              <div class="vc-label">Missing Fields</div>
+              <div class="vc-value" id="vcMissing">0</div>
+              <div class="vc-foot">Needs correction</div>
+            </div>
+          </div>
+
+          <!-- Filter Tabs -->
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All</button>
+            <button class="filter-tab" data-filter="ready">&#129001; Ready</button>
+            <button class="filter-tab" data-filter="dup">&#128993; Duplicates</button>
+            <button class="filter-tab" data-filter="err">&#128308; Errors</button>
+          </div>
+
+          <!-- Preview Table -->
+          <div class="table-wrap" id="biPreviewTableWrap">
+            <table id="biPreviewTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Phone</th>
+                  <th>Institution</th>
+                  <th>Committee</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="biPreviewTbody"></tbody>
+            </table>
+            <div class="table-footnote" id="biTableFootnote">—</div>
+          </div>
+        </div>
+
+        <!-- Step 3: Progress -->
+        <div class="panel" id="bi-progress-panel" style="display:none;">
+          <div class="panel-head">
+            <div>
+              <p class="panel-title">Import Progress</p>
+              <p class="panel-sub" id="biProgressStatus">Preparing batch…</p>
+            </div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="biProgressFill" style="width:0%"></div>
+          </div>
+          <div style="display:flex; gap:24px; margin-top:10px; font-family:var(--font-mono); font-size:11px; color:var(--ivory-faint);">
+            <span>Imported: <strong id="piImported" style="color:#9fd6b3;">0</strong></span>
+            <span>Skipped: <strong id="piSkipped" style="color:var(--gold-bright);">0</strong></span>
+            <span>Failed: <strong id="piFailed" style="color:#d18a8a;">0</strong></span>
+            <span>Total: <strong id="piTotal" style="color:var(--ivory-dim);">0</strong></span>
+          </div>
+        </div>
+
+        <!-- Step 4: Success Summary -->
+        <div class="panel" id="bi-success-panel" style="display:none;">
+          <div class="panel-head">
+            <div>
+              <p class="panel-title">Import Complete</p>
+              <p class="panel-sub" id="biTimeTaken">—</p>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="biNewImportBtn">+ New Import</button>
+          </div>
+          <div class="import-summary-grid">
+            <div class="import-summary-card isc-imported">
+              <div class="isc-num" id="sucImported">0</div>
+              <div class="isc-label">Imported</div>
+            </div>
+            <div class="import-summary-card isc-skipped">
+              <div class="isc-num" id="sucSkipped">0</div>
+              <div class="isc-label">Skipped</div>
+            </div>
+            <div class="import-summary-card isc-failed">
+              <div class="isc-num" id="sucFailed">0</div>
+              <div class="isc-label">Failed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Import History -->
+      <div class="panel" style="margin-top:24px;">
+        <div class="panel-head">
+          <div>
+            <p class="panel-title">Import History</p>
+            <p class="panel-sub">Previous bulk import sessions</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="biRefreshHistoryBtn">&#8634; Refresh</button>
+        </div>
+        <div class="history-table-wrap">
+          <table style="min-width:600px;">
+            <thead>
+              <tr>
+                <th>Date &amp; Time</th>
+                <th>Rows Imported</th>
+                <th>Skipped</th>
+                <th>Failed</th>
+                <th>Imported By</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="biHistoryTbody">
+              <tr><td colspan="6" style="text-align:center; color:var(--ivory-faint); padding:20px; font-family:var(--font-mono); font-size:11px; letter-spacing:0.08em;">NO HISTORY YET</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
     <!-- ============ OVERVIEW ============ -->
     <section class="section active" id="sec-overview">
       <div class="topline">
@@ -1144,7 +1672,8 @@ import {
   doc,
   setDoc,
   getDoc,
-  serverTimestamp
+  serverTimestamp,
+  writeBatch
 }
 from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
@@ -1304,7 +1833,7 @@ function renderDelegateTable(delegates) {
       <td class="cell-name">${d.name || ""}</td>
       <td class="cell-mono">${d.phone || ""}</td>
       <td class="cell-mono">${d.dob || "-"}</td>
-      <td>${d.committeePreference || ""}</td>
+      <td>${d.committeePreference || d.committee || ""}</td>
       <td>${d.portfolio || "-"}</td>
       <td>${d.allocated ? '<span class="status-tag allocated">Allocated</span>' : '<span class="status-tag pending">Pending</span>'}</td>
       <td class="cell-mono">${createdAt}</td>
@@ -2089,6 +2618,513 @@ document.addEventListener(
     loadAdminCodes();
 
 });
+/* ============================================================
+   BULK DELEGATE IMPORT — V2.2
+   ============================================================ */
+(function(){
+
+  /* ---- Known committees (sync with your Firestore / extend as needed) ---- */
+  const KNOWN_COMMITTEES = ["UNSC","UNHRC","DISEC","ECOSOC","Lok Sabha","ICJ","WHO","AIPPM","UNGA"];
+
+  /* ---- State ---- */
+  let biRows = [];         // parsed + validated rows
+  let biRawFile = null;
+  let biFilter = "all";
+  let biPhonesSeen = new Set(); // existing phones from Firestore
+
+  /* ---- DOM refs ---- */
+  const dropZone        = document.getElementById("biDropZone");
+  const fileInput       = document.getElementById("biFileInput");
+  const browseBtn       = document.getElementById("biBrowseBtn");
+  const fileInfo        = document.getElementById("biFileInfo");
+  const fileName        = document.getElementById("biFileName");
+  const fileMeta        = document.getElementById("biFileMeta");
+  const validateBtn     = document.getElementById("biValidateBtn");
+  const validatingSpn   = document.getElementById("biValidatingSpinner");
+  const valSection      = document.getElementById("bi-validation-section");
+  const biPreviewTbody  = document.getElementById("biPreviewTbody");
+  const biTableFootnote = document.getElementById("biTableFootnote");
+  const vcTotal         = document.getElementById("vcTotal");
+  const vcReady         = document.getElementById("vcReady");
+  const vcDup           = document.getElementById("vcDup");
+  const vcBadCom        = document.getElementById("vcBadCom");
+  const vcMissing       = document.getElementById("vcMissing");
+  const biImportBtn     = document.getElementById("biImportBtn");
+  const biResetBtn      = document.getElementById("biResetBtn");
+  const biNewImportBtn  = document.getElementById("biNewImportBtn");
+  const biProgressPanel = document.getElementById("bi-progress-panel");
+  const biSuccessPanel  = document.getElementById("bi-success-panel");
+  const biProgressFill  = document.getElementById("biProgressFill");
+  const biProgressStatus= document.getElementById("biProgressStatus");
+  const piImported      = document.getElementById("piImported");
+  const piSkipped       = document.getElementById("piSkipped");
+  const piFailed        = document.getElementById("piFailed");
+  const piTotal         = document.getElementById("piTotal");
+  const sucImported     = document.getElementById("sucImported");
+  const sucSkipped      = document.getElementById("sucSkipped");
+  const sucFailed       = document.getElementById("sucFailed");
+  const biTimeTaken     = document.getElementById("biTimeTaken");
+  const biHistoryTbody  = document.getElementById("biHistoryTbody");
+  const biRefreshHistoryBtn = document.getElementById("biRefreshHistoryBtn");
+  const biDownloadTemplateBtn = document.getElementById("biDownloadTemplateBtn");
+
+  /* Edit modal */
+  const editModalMask     = document.getElementById("biEditModalMask");
+  const editModalClose    = document.getElementById("biEditModalClose");
+  const editCancelBtn     = document.getElementById("biEditCancelBtn");
+  const editSaveBtn       = document.getElementById("biEditSaveBtn");
+  const editRowIndex      = document.getElementById("biEditRowIndex");
+  const editName          = document.getElementById("biEditName");
+  const editPhone         = document.getElementById("biEditPhone");
+  const editInstitution   = document.getElementById("biEditInstitution");
+  const editCommittee     = document.getElementById("biEditCommittee");
+  const editCommitteeSuggest = document.getElementById("biEditCommitteeSuggest");
+
+  /* ---- Drag & Drop ---- */
+  dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+  dropZone.addEventListener("drop", e => {
+    e.preventDefault();
+    dropZone.classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+  browseBtn.addEventListener("click", e => { e.stopPropagation(); fileInput.click(); });
+  dropZone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+  /* ---- Template Download ---- */
+  biDownloadTemplateBtn.addEventListener("click", () => {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([["Name","Phone","Institution","Committee"]]);
+    XLSX.utils.book_append_sheet(wb, ws, "Delegates");
+    XLSX.writeFile(wb, "MUNITE_Delegate_Template.xlsx");
+  });
+
+  /* ---- Handle file ---- */
+  function handleFile(file) {
+    const allowed = [".xlsx",".csv",".xls"];
+    const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+    if (!allowed.includes(ext)) { alert("Please upload a .xlsx or .csv file."); return; }
+    biRawFile = file;
+    fileName.textContent = file.name;
+    const kb = (file.size / 1024).toFixed(1);
+    fileMeta.textContent = `${kb} KB  ·  ${ext.toUpperCase()}`;
+    fileInfo.classList.add("show");
+    validateBtn.style.display = "inline-flex";
+    valSection.style.display = "none";
+    biProgressPanel.style.display = "none";
+    biSuccessPanel.style.display = "none";
+    biRows = [];
+  }
+
+  /* ---- Validate ---- */
+  validateBtn.addEventListener("click", async () => {
+    if (!biRawFile) return;
+    validateBtn.style.display = "none";
+    validatingSpn.style.display = "inline";
+    await fetchExistingPhones();
+    parseAndValidate(biRawFile);
+  });
+
+  async function fetchExistingPhones() {
+    biPhonesSeen = new Set();
+    try {
+      const snap = await getDocs(collection(db, "delegates"));
+      snap.forEach(d => {
+        const ph = (d.data().phone || "").replace(/\s/g,"");
+        if (ph) biPhonesSeen.add(ph);
+      });
+    } catch(e) { console.warn("Could not fetch existing phones:", e); }
+  }
+
+  function parseAndValidate(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type:"array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval:"" });
+
+        biRows = json.map((row, i) => {
+          const name = String(row["Name"] || row["name"] || row["Full Name"] || "").trim();
+          const phone = String(row["Phone"] || row["phone"] || row["Mobile"] || "").trim().replace(/\s/g,"");
+          const institution = String(row["Institution"] || row["institution"] || row["College"] || row["School"] || "").trim();
+          const committee = String(row["Committee"] || row["committee"] || "").trim();
+          return validateRow({ idx: i, name, phone, institution, committee });
+        });
+
+        renderValidation();
+      } catch(err) {
+        console.error(err);
+        alert("Failed to parse file. Ensure it is a valid .xlsx or .csv.");
+      } finally {
+        validatingSpn.style.display = "none";
+        validateBtn.style.display = "inline-flex";
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function validateRow(row) {
+    const errors = [];
+    const warns = [];
+
+    if (!row.name) errors.push("Missing Name");
+    if (!row.phone) errors.push("Missing Phone");
+    if (!row.institution) errors.push("Missing Institution");
+    if (!row.committee) errors.push("Missing Committee");
+
+    const committeeSuggestion = suggestCommittee(row.committee);
+
+    if (row.phone && biPhonesSeen.has(row.phone)) {
+      warns.push("Duplicate Phone");
+    }
+
+    if (row.committee && !KNOWN_COMMITTEES.map(c=>c.toLowerCase()).includes(row.committee.toLowerCase())) {
+      if (!committeeSuggestion) errors.push("Invalid Committee");
+    }
+
+    let status;
+    if (errors.length > 0) status = "err";
+    else if (warns.length > 0) status = "dup";
+    else status = "ready";
+
+    return { ...row, errors, warns, status, committeeSuggestion };
+  }
+
+  function suggestCommittee(input) {
+    if (!input) return null;
+    const lower = input.toLowerCase().replace(/[^a-z0-9]/g,"");
+    for (const c of KNOWN_COMMITTEES) {
+      const cl = c.toLowerCase().replace(/[^a-z0-9]/g,"");
+      if (cl === lower) return null; // exact match
+      if (cl.includes(lower) || lower.includes(cl) || levenshtein(cl, lower) <= 3) return c;
+    }
+    return null;
+  }
+
+  function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    const dp = Array.from({length:m+1}, (_,i) => Array.from({length:n+1}, (_,j) => i===0?j:j===0?i:0));
+    for (let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+    return dp[m][n];
+  }
+
+  /* ---- Render Validation ---- */
+  function renderValidation() {
+    valSection.style.display = "block";
+    valSection.scrollIntoView({ behavior:"smooth", block:"start" });
+
+    const total   = biRows.length;
+    const ready   = biRows.filter(r=>r.status==="ready").length;
+    const dup     = biRows.filter(r=>r.status==="dup").length;
+    const err     = biRows.filter(r=>r.status==="err").length;
+    const missing = biRows.filter(r=>r.errors.some(e=>e.startsWith("Missing"))).length;
+    const badCom  = biRows.filter(r=>r.errors.includes("Invalid Committee")).length;
+
+    vcTotal.textContent   = total;
+    vcReady.textContent   = ready;
+    vcDup.textContent     = dup;
+    vcBadCom.textContent  = badCom;
+    vcMissing.textContent = missing;
+
+    renderTable();
+  }
+
+  function renderTable() {
+    let filtered = biRows;
+    if (biFilter === "ready") filtered = biRows.filter(r=>r.status==="ready");
+    else if (biFilter === "dup") filtered = biRows.filter(r=>r.status==="dup");
+    else if (biFilter === "err") filtered = biRows.filter(r=>r.status==="err");
+
+    let html = "";
+    filtered.forEach((row) => {
+      const realIdx = biRows.indexOf(row);
+      const statusHtml = buildStatusTag(row);
+      const actionHtml = (row.status !== "ready")
+        ? `<button class="btn btn-ghost btn-sm bi-edit-btn" data-idx="${realIdx}">&#9998; Edit</button>`
+        : `<span style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);">—</span>`;
+
+      const committeeCellContent = buildCommitteeCell(row, realIdx);
+
+      html += `<tr>
+        <td class="cell-mono">${row.idx + 1}</td>
+        <td class="cell-name">${escHtml(row.name) || '<span style="color:var(--red-status)">MISSING</span>'}</td>
+        <td class="cell-mono">${escHtml(row.phone) || '<span style="color:var(--red-status)">MISSING</span>'}</td>
+        <td>${escHtml(row.institution) || '<span style="color:var(--red-status)">MISSING</span>'}</td>
+        <td>${committeeCellContent}</td>
+        <td>${statusHtml}</td>
+        <td><div class="action-row">${actionHtml}</div></td>
+      </tr>`;
+    });
+
+    biPreviewTbody.innerHTML = html || `<tr><td colspan="7" style="text-align:center;color:var(--ivory-faint);padding:24px;font-family:var(--font-mono);font-size:11px;">NO ROWS MATCH THIS FILTER</td></tr>`;
+    biTableFootnote.textContent = `Showing ${filtered.length} of ${biRows.length} rows`;
+  }
+
+  function buildStatusTag(row) {
+    if (row.status === "ready") return `<span class="import-status-tag ist-ready">&#129001; Ready</span>`;
+    if (row.status === "dup")   return `<span class="import-status-tag ist-dup">&#128993; Duplicate Phone</span>`;
+    const labels = row.errors.map(e => {
+      if (e === "Missing Name")      return "&#128308; Missing Name";
+      if (e === "Missing Phone")     return "&#128308; Missing Phone";
+      if (e === "Missing Institution") return "&#128308; Missing Institution";
+      if (e === "Missing Committee") return "&#128308; Missing Committee";
+      if (e === "Invalid Committee") return "&#128308; Invalid Committee";
+      return `&#128308; ${e}`;
+    });
+    return labels.map(l=>`<span class="import-status-tag ist-err">${l}</span>`).join(" ");
+  }
+
+  function buildCommitteeCell(row, realIdx) {
+    const display = escHtml(row.committee) || '<span style="color:var(--red-status)">MISSING</span>';
+    if (row.committeeSuggestion) {
+      return `${display} <span class="suggest-pill" title="Apply suggestion">
+        &#128161; Did you mean <strong style="margin:0 3px;">${escHtml(row.committeeSuggestion)}</strong>?
+        <span class="sp-apply-all" data-suggestion="${escHtml(row.committeeSuggestion)}" data-idx="${realIdx}" data-apply="one">Apply</span>
+        <span class="sp-apply-all" data-suggestion="${escHtml(row.committeeSuggestion)}" data-apply="all">Apply to All</span>
+      </span>`;
+    }
+    return display;
+  }
+
+  function escHtml(s) {
+    return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  /* ---- Filter Tabs ---- */
+  document.querySelectorAll(".filter-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".filter-tab").forEach(t=>t.classList.remove("active"));
+      tab.classList.add("active");
+      biFilter = tab.dataset.filter;
+      renderTable();
+    });
+  });
+
+  /* ---- Suggestion pills (delegate) ---- */
+  document.addEventListener("click", e => {
+    const pill = e.target.closest(".sp-apply-all");
+    if (!pill) return;
+    const suggestion = pill.dataset.suggestion;
+    const applyMode  = pill.dataset.apply;
+    const idx        = parseInt(pill.dataset.idx);
+
+    if (applyMode === "one") {
+      biRows[idx].committee = suggestion;
+      biRows[idx] = validateRow(biRows[idx]);
+    } else if (applyMode === "all") {
+      biRows.forEach((r, i) => {
+        if (r.committeeSuggestion === suggestion) {
+          biRows[i].committee = suggestion;
+          biRows[i] = validateRow(biRows[i]);
+        }
+      });
+    }
+    renderValidation();
+  });
+
+  /* ---- Edit button ---- */
+  document.addEventListener("click", e => {
+    const btn = e.target.closest(".bi-edit-btn");
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx);
+    const row = biRows[idx];
+    editRowIndex.value = idx;
+    editName.value = row.name;
+    editPhone.value = row.phone;
+    editInstitution.value = row.institution;
+    editCommittee.value = row.committee;
+    editCommitteeSuggest.innerHTML = "";
+    editModalMask.classList.add("show");
+  });
+
+  editCommittee.addEventListener("input", () => {
+    const sug = suggestCommittee(editCommittee.value);
+    if (sug) {
+      editCommitteeSuggest.innerHTML = `<span class="suggest-pill" style="cursor:pointer;" id="editSugPill">&#128161; Did you mean <strong>${escHtml(sug)}</strong>? <span class="sp-apply-all">Apply</span></span>`;
+      document.getElementById("editSugPill").addEventListener("click", () => {
+        editCommittee.value = sug;
+        editCommitteeSuggest.innerHTML = "";
+      });
+    } else {
+      editCommitteeSuggest.innerHTML = "";
+    }
+  });
+
+  function closeEditModal() { editModalMask.classList.remove("show"); }
+  editModalClose.addEventListener("click", closeEditModal);
+  editCancelBtn.addEventListener("click", closeEditModal);
+  editModalMask.addEventListener("click", e => { if (e.target === editModalMask) closeEditModal(); });
+
+  editSaveBtn.addEventListener("click", () => {
+    const idx = parseInt(editRowIndex.value);
+    biRows[idx].name = editName.value.trim();
+    biRows[idx].phone = editPhone.value.trim().replace(/\s/g,"");
+    biRows[idx].institution = editInstitution.value.trim();
+    biRows[idx].committee = editCommittee.value.trim();
+    biRows[idx] = validateRow(biRows[idx]);
+    closeEditModal();
+    renderValidation();
+  });
+
+  /* ---- Reset ---- */
+  biResetBtn.addEventListener("click", () => {
+    biRows = []; biRawFile = null;
+    fileInfo.classList.remove("show");
+    validateBtn.style.display = "none";
+    validatingSpn.style.display = "none";
+    valSection.style.display = "none";
+    biProgressPanel.style.display = "none";
+    biSuccessPanel.style.display = "none";
+    fileInput.value = "";
+  });
+
+  biNewImportBtn.addEventListener("click", () => biResetBtn.click());
+
+  /* ---- Import ---- */
+  biImportBtn.addEventListener("click", async () => {
+    const toImport = biRows.filter(r => r.status === "ready");
+    const toSkip   = biRows.filter(r => r.status === "dup");
+    const toFail   = biRows.filter(r => r.status === "err");
+
+    if (toImport.length === 0) { alert("No valid rows to import."); return; }
+    if (!confirm(`Import ${toImport.length} valid delegate(s)? ${toSkip.length} will be skipped, ${toFail.length} have errors.`)) return;
+
+    biProgressPanel.style.display = "block";
+    biSuccessPanel.style.display = "none";
+    biProgressPanel.scrollIntoView({ behavior:"smooth", block:"start" });
+
+    const startTime = Date.now();
+    let imported = 0, failed = 0;
+    const total = toImport.length;
+
+    piTotal.textContent = total;
+    piSkipped.textContent = toSkip.length;
+    piFailed.textContent = 0;
+    piImported.textContent = 0;
+
+    const BATCH_SIZE = 400;
+    for (let i = 0; i < toImport.length; i += BATCH_SIZE) {
+      const chunk = toImport.slice(i, i + BATCH_SIZE);
+      try {
+        const batch = writeBatch(db);
+        chunk.forEach(row => {
+
+          const ref = doc(db, "delegates", row.phone);
+
+          batch.set(ref, {
+            name: row.name,
+            phone: row.phone,
+            dob: "",
+            isRegistered: false,
+            committeePreference: row.committeePreference,
+            email: "",
+            institution: row.institution,
+            allocated: false,
+            portfolio: "",
+            createdAt: serverTimestamp()
+          });
+
+        });
+        await batch.commit();
+        imported += chunk.length;
+      } catch(err) {
+        console.error("Batch failed:", err);
+        failed += chunk.length;
+      }
+      biProgressFill.style.width = `${Math.round((i + chunk.length) / total * 100)}%`;
+      piImported.textContent = imported;
+      piFailed.textContent = failed;
+      biProgressStatus.textContent = `Writing batch ${Math.ceil((i+chunk.length)/BATCH_SIZE)} of ${Math.ceil(total/BATCH_SIZE)}…`;
+    }
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+    /* Log to Firestore */
+    try {
+      await addDoc(collection(db, "bulkImportHistory"), {
+        timestamp:    serverTimestamp(),
+        importedBy:   currentAdminCode || "admin",
+        imported,
+        skipped:      toSkip.length,
+        failed,
+        status:       failed === 0 ? "complete" : "partial"
+      });
+      await addDoc(collection(db, "adminActivityLogs"), {
+        actor:     currentAdminCode || "admin",
+        action:    `Bulk import — ${imported} delegates added`,
+        timestamp: serverTimestamp()
+      });
+    } catch(e) { console.warn("Could not write history:", e); }
+
+    biProgressStatus.textContent = "Import complete.";
+    biProgressFill.style.width = "100%";
+
+    sucImported.textContent = imported;
+    sucSkipped.textContent  = toSkip.length;
+    sucFailed.textContent   = failed;
+    biTimeTaken.textContent = `Completed in ${elapsed}s`;
+    biSuccessPanel.style.display = "block";
+
+    loadBulkImportHistory();
+  });
+
+  /* ---- Import History ---- */
+  async function loadBulkImportHistory() {
+    try {
+      const snap = await getDocs(collection(db, "bulkImportHistory"));
+      const rows = [];
+      snap.forEach(d => rows.push({id:d.id,...d.data()}));
+      rows.sort((a,b) => {
+        const ta = a.timestamp ? a.timestamp.toMillis() : 0;
+        const tb = b.timestamp ? b.timestamp.toMillis() : 0;
+        return tb - ta;
+      });
+      let html = "";
+      rows.forEach(r => {
+        const ts = r.timestamp ? r.timestamp.toDate().toLocaleString() : "—";
+        const statusClass = r.status === "complete" ? "allocated" : "pending";
+        html += `<tr>
+          <td class="cell-mono">${ts}</td>
+          <td class="cell-name">${r.imported ?? 0}</td>
+          <td>${r.skipped ?? 0}</td>
+          <td>${r.failed ?? 0}</td>
+          <td class="cell-mono">${escHtml(r.importedBy || "—")}</td>
+          <td><span class="status-tag ${statusClass}">${r.status === "complete" ? "Complete" : "Partial"}</span></td>
+        </tr>`;
+      });
+      biHistoryTbody.innerHTML = html || `<tr><td colspan="6" style="text-align:center;color:var(--ivory-faint);padding:20px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;">NO HISTORY YET</td></tr>`;
+    } catch(e) { console.warn("Could not load import history:", e); }
+  }
+
+  biRefreshHistoryBtn.addEventListener("click", loadBulkImportHistory);
+
+  /* ---- Load history when section becomes active ---- */
+  document.querySelectorAll(".nav-item[data-section='bulkimport']").forEach(btn => {
+    btn.addEventListener("click", loadBulkImportHistory);
+  });
+
+  /* ---- view-all goto shortcut ---- */
+  document.querySelectorAll("[data-goto]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.goto;
+      document.querySelectorAll(".nav-item").forEach(n => {
+        n.classList.toggle("active", n.dataset.section === target);
+      });
+      document.querySelectorAll(".section").forEach(s => {
+        s.classList.toggle("active", s.id === `sec-${target}`);
+      });
+    });
+  });
+
+})();
+/* ============================================================
+   BULK DELEGATE IMPORT — END
+   ============================================================ */
 /* ============================================================
    FIREBASE INTEGRATION — GLOBAL PLACEHOLDER
    ============================================================ */

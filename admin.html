@@ -1006,6 +1006,187 @@ tbody tr:last-child td{ border-bottom:none; }
   border-top: 1px solid rgba(200,160,66,0.12);
 }
 /* ============================================================
+   COMMITTEE MANAGEMENT — V2.5
+   ============================================================ */
+.committee-cards-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px,1fr));
+  gap: 18px;
+  margin-top: 22px;
+}
+.committee-card{
+  background: linear-gradient(165deg, var(--purple) 0%, var(--purple-deep) 100%);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  padding: 22px 22px 18px;
+  position: relative;
+  overflow: hidden;
+  animation: fade-in .35s ease;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.committee-card:hover{
+  border-color: rgba(200,160,66,0.35);
+  box-shadow: 0 4px 28px rgba(0,0,0,0.35);
+}
+.committee-card::before{
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  opacity:.45;
+}
+.committee-card.inactive-card{ opacity:.6; }
+.cc-top{
+  display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;
+}
+.cc-shortname{
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.1em;
+  color: var(--ivory);
+}
+.cc-fullname{
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--ivory-dim);
+  margin-top: 3px;
+}
+.cc-badge{
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+.cc-badge.active-badge{ color:#9fd6b3; border-color:rgba(75,122,94,0.5); background:rgba(75,122,94,0.08); }
+.cc-badge.inactive-badge{ color:#d18a8a; border-color:rgba(156,59,59,0.4); background:rgba(156,59,59,0.07); }
+.cc-stats{
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;
+}
+.cc-stat{
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(200,160,66,0.1);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+}
+.cc-stat .cs-label{
+  font-family: var(--font-mono); font-size:9px; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--ivory-faint); margin-bottom:4px;
+}
+.cc-stat .cs-val{
+  font-family: var(--font-display); font-size:20px; color:var(--ivory); line-height:1;
+}
+.cc-prog-bar{
+  height:5px; background:rgba(255,255,255,0.05); border-radius:4px;
+  overflow:hidden; border:1px solid rgba(200,160,66,0.1); margin:10px 0;
+}
+.cc-prog-fill{
+  height:100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright));
+  border-radius:4px;
+  transition: width .4s ease;
+}
+.cc-meta-row{
+  font-family:var(--font-mono); font-size:9.5px; color:var(--ivory-faint);
+  letter-spacing:0.06em; margin-bottom:14px;
+}
+.cc-actions-row{
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+
+/* Committee modal */
+.cm-modal-mask{
+  position:fixed; inset:0;
+  background:rgba(8,4,14,0.82);
+  backdrop-filter:blur(3px);
+  z-index:210;
+  display:none; align-items:center; justify-content:center;
+}
+.cm-modal-mask.show{ display:flex; }
+.cm-modal{
+  background: linear-gradient(180deg, var(--purple-deep), #160826);
+  border:1px solid var(--gold-dim);
+  border-radius:var(--radius);
+  width:540px; max-width:95vw;
+  max-height:90vh; overflow-y:auto;
+  box-shadow:0 30px 80px rgba(0,0,0,0.65);
+  animation:fade-in .25s ease;
+}
+.cm-modal-head{
+  padding:22px 26px 16px;
+  border-bottom:1px solid rgba(200,160,66,0.18);
+  display:flex; justify-content:space-between; align-items:center;
+  position:sticky; top:0; background:var(--purple-deep); z-index:1;
+}
+.cm-modal-head h3{
+  font-family:var(--font-display); font-size:21px;
+  margin:0; color:var(--ivory); letter-spacing:0.04em;
+}
+.cm-modal-body{ padding:22px 26px; }
+.cm-modal-foot{
+  padding:14px 26px 22px;
+  display:flex; gap:10px; justify-content:flex-end;
+  border-top:1px solid rgba(200,160,66,0.12);
+  position:sticky; bottom:0; background:linear-gradient(180deg, var(--purple-deep), #160826);
+}
+.toggle-switch-wrap{
+  display:flex; align-items:center; gap:12px; padding:10px 0;
+}
+.toggle-switch{
+  position:relative; width:40px; height:22px;
+}
+.toggle-switch input{ opacity:0; width:0; height:0; }
+.toggle-slider{
+  position:absolute; inset:0; background:var(--purple-line);
+  border-radius:22px; cursor:pointer; transition:.2s ease;
+}
+.toggle-slider::before{
+  content:''; position:absolute;
+  width:16px; height:16px; left:3px; bottom:3px;
+  background:var(--ivory-faint); border-radius:50%; transition:.2s ease;
+}
+.toggle-switch input:checked + .toggle-slider{ background:var(--green-status); }
+.toggle-switch input:checked + .toggle-slider::before{ transform:translateX(18px); background:var(--ivory); }
+.toggle-label{ font-family:var(--font-sans); font-size:13px; color:var(--ivory-dim); }
+
+/* Exports section */
+.export-cards-grid{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr));
+  gap:18px; margin-top:22px;
+}
+.export-card{
+  background:linear-gradient(165deg, var(--purple) 0%, var(--purple-deep) 100%);
+  border:1px solid var(--purple-line);
+  border-radius:var(--radius);
+  padding:20px 22px 18px;
+  animation:fade-in .35s ease;
+  transition:border-color .2s ease;
+}
+.export-card:hover{ border-color:rgba(200,160,66,0.3); }
+.ec-name{ font-family:var(--font-display); font-size:18px; color:var(--ivory); margin-bottom:4px; }
+.ec-count{ font-family:var(--font-mono); font-size:10px; color:var(--ivory-faint); letter-spacing:0.1em; margin-bottom:14px; }
+.ec-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+
+/* Reports section */
+.report-grid{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr));
+  gap:18px; margin-top:22px;
+}
+.report-card{
+  background:linear-gradient(165deg, var(--purple) 0%, var(--purple-deep) 100%);
+  border:1px solid var(--purple-line); border-radius:var(--radius);
+  padding:22px 22px 18px; animation:fade-in .35s ease;
+}
+.rc-title{ font-family:var(--font-display); font-size:17px; color:var(--ivory); margin-bottom:4px; }
+.rc-sub{ font-family:var(--font-mono); font-size:9.5px; color:var(--ivory-faint); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:14px; }
+.rc-data{ margin-bottom:14px; }
+.rc-row{ display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px dashed rgba(200,160,66,0.12); font-size:12.5px; }
+.rc-row:last-child{ border-bottom:none; }
+.rc-key{ color:var(--ivory-dim); }
+.rc-val{ font-family:var(--font-mono); color:var(--gold-bright); font-size:12px; }
+.rc-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 1100px){
@@ -1096,6 +1277,11 @@ tbody tr:last-child td{ border-bottom:none; }
       <button class="nav-item" data-section="delegates"><span class="glyph">&#9650;</span> Delegates</button>
       <button class="nav-item" data-section="notifications"><span class="glyph">&#9839;</span> Notifications</button>
       <button class="nav-item" data-section="allocations"><span class="glyph">&#9908;</span> Allocations</button>
+
+      <p class="nav-eyebrow">Conference</p>
+      <button class="nav-item" data-section="committees"><span class="glyph">&#9753;</span> Committees</button>
+      <button class="nav-item" data-section="exports"><span class="glyph">&#8659;</span> Exports</button>
+      <button class="nav-item" data-section="reports"><span class="glyph">&#9636;</span> Reports</button>
 
       <p class="nav-eyebrow">Records</p>
       <button class="nav-item" data-section="logs"><span class="glyph">&#9776;</span> Activity Logs</button>
@@ -1423,11 +1609,6 @@ tbody tr:last-child td{ border-bottom:none; }
           </div>
           <select class="select" id="committeeFilterSelect">
             <option value="">All Committees</option>
-            <option value="UNSC">UNSC</option>
-            <option value="UNHRC">UNHRC</option>
-            <option value="DISEC">DISEC</option>
-            <option value="ECOSOC">ECOSOC</option>
-            <option value="Lok Sabha">Lok Sabha</option>
           </select>
           <select class="select" id="statusFilterSelect">
             <option value="">All Statuses</option>
@@ -1472,6 +1653,23 @@ tbody tr:last-child td{ border-bottom:none; }
           <p class="panel-title">Publish Notification</p>
           <p class="panel-sub" style="margin-bottom:20px;">Visible to all delegates instantly</p>
 
+          <div class="field">
+            <label>Recipients</label>
+            <select id="notifRecipient" class="select" style="width:100%;">
+              <option value="everyone">Everyone</option>
+              <option value="registered">Registered Delegates</option>
+              <option value="pending_registration">Pending Registration</option>
+              <option value="allocated">Allocated Delegates</option>
+              <option value="unallocated">Unallocated Delegates</option>
+              <option value="committee">Specific Committee</option>
+            </select>
+          </div>
+          <div class="field" id="notifCommitteeField" style="display:none;">
+            <label>Committee</label>
+            <select id="notifCommitteeSelect" class="select" style="width:100%;">
+              <option value="">Loading committees…</option>
+            </select>
+          </div>
           <div class="field">
             <label>Title</label>
             <input id="notificationTitle" class="input" type="text" placeholder="e.g. Committee Room Change">
@@ -1608,6 +1806,63 @@ tbody tr:last-child td{ border-bottom:none; }
         <!-- TODO: Replace with live Firestore collection `adminLoginHistory` -->
       </div>
     </section>
+    <!-- ============ COMMITTEE MANAGEMENT ============ -->
+    <section class="section" id="sec-committees">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Secretariat Command &middot; Conference</p>
+          <h1>Committee Management</h1>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" id="cmRefreshBtn">&#8634; Refresh</button>
+          <button class="btn btn-primary" id="cmAddBtn">+ Add Committee</button>
+        </div>
+      </div>
+
+      <div id="cmCardsGrid" class="committee-cards-grid">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--ivory-faint);letter-spacing:0.1em;padding:30px 0;">LOADING COMMITTEES…</div>
+      </div>
+    </section>
+
+    <!-- ============ COMMITTEE EXPORTS ============ -->
+    <section class="section" id="sec-exports">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Secretariat Command &middot; Conference</p>
+          <h1>Committee Exports</h1>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" id="exRefreshBtn">&#8634; Refresh</button>
+          <button class="btn btn-primary" id="exExportAllBtn">&#8659; Export All (ZIP)</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <p class="panel-title">Export by Committee</p>
+        <p class="panel-sub">Download delegate lists per committee as Excel or CSV</p>
+        <div id="exCardsGrid" class="export-cards-grid">
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--ivory-faint);letter-spacing:0.1em;padding:30px 0;">LOADING…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ADVANCED REPORTS ============ -->
+    <section class="section" id="sec-reports">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Secretariat Command &middot; Conference</p>
+          <h1>Reports</h1>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" id="rpRefreshBtn">&#8634; Refresh All</button>
+        </div>
+      </div>
+
+      <div class="report-grid" id="rpGrid">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--ivory-faint);letter-spacing:0.1em;padding:30px 0;">LOADING REPORTS…</div>
+      </div>
+    </section>
+
     <section class="section" id="sec-requests">
 
       <div class="topline">
@@ -1654,6 +1909,86 @@ tbody tr:last-child td{ border-bottom:none; }
   </main>
 </div>
 
+<!-- ================= COMMITTEE ADD/EDIT MODAL ================= -->
+<div class="cm-modal-mask" id="cmModalMask">
+  <div class="cm-modal">
+    <div class="cm-modal-head">
+      <h3 id="cmModalTitle">Add Committee</h3>
+      <button class="close-x" id="cmModalClose">&#215;</button>
+    </div>
+    <div class="cm-modal-body">
+      <input type="hidden" id="cmEditId">
+      <div class="field-row">
+        <div class="field">
+          <label>Committee Name</label>
+          <input class="input" type="text" id="cmName" placeholder="e.g. United Nations Security Council">
+        </div>
+        <div class="field">
+          <label>Short Name</label>
+          <input class="input" type="text" id="cmShortName" placeholder="e.g. UNSC">
+        </div>
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea id="cmDescription" placeholder="Brief description of the committee…"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Display Order</label>
+          <input class="input" type="number" id="cmDisplayOrder" placeholder="1" min="1">
+        </div>
+        <div class="field">
+          <label>Maximum Delegates</label>
+          <input class="input" type="number" id="cmMaxDelegates" placeholder="30" min="1">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Portfolio JSON Filename</label>
+          <input class="input" type="text" id="cmPortfolioFile" placeholder="e.g. unsc_portfolios.json">
+        </div>
+        <div class="field">
+          <label>Study Guide URL</label>
+          <input class="input" type="text" id="cmStudyGuide" placeholder="https://…">
+        </div>
+      </div>
+      <div class="field">
+        <div class="toggle-switch-wrap">
+          <label class="toggle-switch">
+            <input type="checkbox" id="cmActive" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Committee Active</span>
+        </div>
+      </div>
+    </div>
+    <div class="cm-modal-foot">
+      <button class="btn btn-ghost" id="cmCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="cmSaveBtn">Save Committee</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= COMMITTEE DELETE CONFIRM MODAL ================= -->
+<div class="cm-modal-mask" id="cmDeleteMask">
+  <div class="cm-modal" style="width:380px;">
+    <div class="cm-modal-head">
+      <h3>Delete Committee</h3>
+      <button class="close-x" id="cmDeleteClose">&#215;</button>
+    </div>
+    <div class="cm-modal-body">
+      <p style="font-family:var(--font-serif);font-size:15px;color:var(--ivory-dim);line-height:1.6;">
+        Delete committee <strong id="cmDeleteName" style="color:var(--ivory);"></strong>?
+        This action cannot be undone and will remove the committee document from Firestore.
+      </p>
+    </div>
+    <div class="cm-modal-foot">
+      <button class="btn btn-ghost" id="cmDeleteCancelBtn">Cancel</button>
+      <button class="btn btn-danger" id="cmDeleteConfirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================= ADD DELEGATE SLIDE-OVER ================= -->
 <div class="overlay-mask" id="overlayMask"></div>
 <div class="slideover" id="delegateSlideover">
@@ -1676,11 +2011,7 @@ tbody tr:last-child td{ border-bottom:none; }
     <div class="field">
       <label>Committee Preference</label>
       <select id="delegateCommittee" class="select" style="width:100%;">
-        <option>UNSC</option>
-        <option>UNHRC</option>
-        <option>DISEC</option>
-        <option>ECOSOC</option>
-        <option>Lok Sabha</option>
+        <option value="">Loading committees…</option>
       </select>
     </div>
     <div class="field">
@@ -2547,6 +2878,663 @@ loadAdminCodes();
 loadOverviewActivity();
 loadLoginHistory();
 loadPartnershipRequests();
+initCommitteeManagement();
+initExports();
+initReports();
+initSmartNotifications();
+
+/* ============================================================
+   SHARED COMMITTEE CACHE — V2.5
+   ============================================================ */
+let committeeCache = []; // { id, data }
+
+async function loadCommitteeCache() {
+  try {
+    const snap = await getDocs(collection(db, "committees"));
+    committeeCache = [];
+    snap.forEach(d => committeeCache.push({ id: d.id, data: d.data() }));
+    committeeCache.sort((a, b) => (a.data.displayOrder || 99) - (b.data.displayOrder || 99));
+  } catch(e) { console.warn("loadCommitteeCache:", e); }
+}
+
+async function refreshAllCommitteeDropdowns() {
+  await loadCommitteeCache();
+  // Delegate filter
+  const filterSel = document.getElementById("committeeFilterSelect");
+  if (filterSel) {
+    filterSel.innerHTML = '<option value="">All Committees</option>' +
+      committeeCache.map(c => `<option value="${c.data.shortName || c.id}">${c.data.name || c.id}</option>`).join("");
+  }
+  // Add delegate slideover
+  const addSel = document.getElementById("delegateCommittee");
+  if (addSel) {
+    addSel.innerHTML = committeeCache.map(c => `<option value="${c.data.shortName || c.id}">${c.data.name || c.id}</option>`).join("") || '<option value="">No committees yet</option>';
+  }
+  // Notification committee
+  const notifSel = document.getElementById("notifCommitteeSelect");
+  if (notifSel) {
+    notifSel.innerHTML = '<option value="">— Select Committee —</option>' +
+      committeeCache.map(c => `<option value="${c.data.shortName || c.id}">${c.data.name || c.id}</option>`).join("");
+  }
+}
+
+/* ============================================================
+   COMMITTEE MANAGEMENT — V2.5
+   ============================================================ */
+function initCommitteeManagement() {
+
+  /* DOM */
+  const cmModalMask   = document.getElementById("cmModalMask");
+  const cmModalTitle  = document.getElementById("cmModalTitle");
+  const cmModalClose  = document.getElementById("cmModalClose");
+  const cmAddBtn      = document.getElementById("cmAddBtn");
+  const cmRefreshBtn  = document.getElementById("cmRefreshBtn");
+  const cmCancelBtn   = document.getElementById("cmCancelBtn");
+  const cmSaveBtn     = document.getElementById("cmSaveBtn");
+  const cmEditId      = document.getElementById("cmEditId");
+  const cmName        = document.getElementById("cmName");
+  const cmShortName   = document.getElementById("cmShortName");
+  const cmDescription = document.getElementById("cmDescription");
+  const cmDisplayOrder= document.getElementById("cmDisplayOrder");
+  const cmMaxDelegates= document.getElementById("cmMaxDelegates");
+  const cmPortfolioFile=document.getElementById("cmPortfolioFile");
+  const cmStudyGuide  = document.getElementById("cmStudyGuide");
+  const cmActive      = document.getElementById("cmActive");
+  const cmCardsGrid   = document.getElementById("cmCardsGrid");
+
+  const cmDeleteMask        = document.getElementById("cmDeleteMask");
+  const cmDeleteClose       = document.getElementById("cmDeleteClose");
+  const cmDeleteCancelBtn   = document.getElementById("cmDeleteCancelBtn");
+  const cmDeleteConfirmBtn  = document.getElementById("cmDeleteConfirmBtn");
+  const cmDeleteName        = document.getElementById("cmDeleteName");
+
+  let pendingDeleteId = null;
+
+  /* ---- Open/close modal ---- */
+  function openCmModal(title) {
+    cmModalTitle.textContent = title;
+    cmModalMask.classList.add("show");
+  }
+  function closeCmModal() {
+    cmModalMask.classList.remove("show");
+    cmEditId.value = "";
+    cmName.value = "";
+    cmShortName.value = "";
+    cmDescription.value = "";
+    cmDisplayOrder.value = "";
+    cmMaxDelegates.value = "";
+    cmPortfolioFile.value = "";
+    cmStudyGuide.value = "";
+    cmActive.checked = true;
+  }
+  cmModalClose.addEventListener("click", closeCmModal);
+  cmCancelBtn.addEventListener("click", closeCmModal);
+  cmModalMask.addEventListener("click", e => { if (e.target === cmModalMask) closeCmModal(); });
+
+  /* ---- Add ---- */
+  cmAddBtn.addEventListener("click", () => {
+    cmEditId.value = "";
+    openCmModal("Add Committee");
+  });
+
+  /* ---- Save ---- */
+  cmSaveBtn.addEventListener("click", async () => {
+    const name = cmName.value.trim();
+    const shortName = cmShortName.value.trim().toUpperCase();
+    if (!name || !shortName) { alert("Committee Name and Short Name are required."); return; }
+
+    const data = {
+      name,
+      shortName,
+      description: cmDescription.value.trim(),
+      displayOrder: parseInt(cmDisplayOrder.value) || 99,
+      maxDelegates: parseInt(cmMaxDelegates.value) || 0,
+      portfolioFile: cmPortfolioFile.value.trim(),
+      studyGuide: cmStudyGuide.value.trim(),
+      active: cmActive.checked,
+      updatedAt: serverTimestamp()
+    };
+
+    const editingId = cmEditId.value;
+    try {
+      if (editingId) {
+        await updateDoc(doc(db, "committees", editingId), data);
+        await addDoc(collection(db, "adminActivityLogs"), {
+          actor: currentAdminCode || "admin",
+          action: `Updated committee — ${name}`,
+          timestamp: serverTimestamp()
+        });
+      } else {
+        data.createdAt = serverTimestamp();
+        await setDoc(doc(db, "committees", shortName), data);
+        await addDoc(collection(db, "adminActivityLogs"), {
+          actor: currentAdminCode || "admin",
+          action: `Created committee — ${name} (${shortName})`,
+          timestamp: serverTimestamp()
+        });
+      }
+      closeCmModal();
+      await renderCommitteeCards();
+      await refreshAllCommitteeDropdowns();
+      loadOverviewMetrics();
+      loadActivityLogs();
+      loadOverviewActivity();
+    } catch(e) {
+      console.error(e);
+      alert("Failed to save committee: " + e.message);
+    }
+  });
+
+  /* ---- Delete modal ---- */
+  function openDeleteModal(id, name) {
+    pendingDeleteId = id;
+    cmDeleteName.textContent = name;
+    cmDeleteMask.classList.add("show");
+  }
+  function closeDeleteModal() { cmDeleteMask.classList.remove("show"); pendingDeleteId = null; }
+  cmDeleteClose.addEventListener("click", closeDeleteModal);
+  cmDeleteCancelBtn.addEventListener("click", closeDeleteModal);
+  cmDeleteMask.addEventListener("click", e => { if (e.target === cmDeleteMask) closeDeleteModal(); });
+
+  cmDeleteConfirmBtn.addEventListener("click", async () => {
+    if (!pendingDeleteId) return;
+    try {
+      const nameSnap = committeeCache.find(c => c.id === pendingDeleteId);
+      const nameStr = nameSnap ? (nameSnap.data.name || pendingDeleteId) : pendingDeleteId;
+      await deleteDoc(doc(db, "committees", pendingDeleteId));
+      await addDoc(collection(db, "adminActivityLogs"), {
+        actor: currentAdminCode || "admin",
+        action: `Deleted committee — ${nameStr}`,
+        timestamp: serverTimestamp()
+      });
+      closeDeleteModal();
+      await renderCommitteeCards();
+      await refreshAllCommitteeDropdowns();
+      loadOverviewMetrics();
+      loadActivityLogs();
+      loadOverviewActivity();
+    } catch(e) {
+      console.error(e);
+      alert("Failed to delete committee.");
+    }
+  });
+
+  /* ---- Render cards ---- */
+  async function renderCommitteeCards() {
+    cmCardsGrid.innerHTML = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--ivory-faint);letter-spacing:0.1em;padding:30px 0;">LOADING…</div>`;
+    await loadCommitteeCache();
+
+    // Calculate delegate counts dynamically
+    let delegateCounts = {};
+    try {
+      const delSnap = await getDocs(collection(db, "delegates"));
+      delSnap.forEach(d => {
+        const cp = (d.data().committeePreference || "").trim();
+        if (cp) delegateCounts[cp] = (delegateCounts[cp] || 0) + 1;
+      });
+    } catch(e) { console.warn("delegate count:", e); }
+
+    if (committeeCache.length === 0) {
+      cmCardsGrid.innerHTML = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--ivory-faint);letter-spacing:0.1em;padding:30px 0;">NO COMMITTEES YET. ADD YOUR FIRST COMMITTEE.</div>`;
+      return;
+    }
+
+    cmCardsGrid.innerHTML = committeeCache.map(({ id, data: c }) => {
+      const count = delegateCounts[c.shortName] || delegateCounts[c.name] || 0;
+      const maxD  = c.maxDelegates || 0;
+      const pct   = maxD > 0 ? Math.min(100, Math.round(count / maxD * 100)) : 0;
+      const activeClass = c.active ? "" : "inactive-card";
+      const badgeClass  = c.active ? "active-badge" : "inactive-badge";
+      const badgeLabel  = c.active ? "Active" : "Inactive";
+      return `
+        <div class="committee-card ${activeClass}" data-id="${id}">
+          <div class="cc-top">
+            <div>
+              <div class="cc-shortname">${c.shortName || id}</div>
+              <div class="cc-fullname">${c.name || ""}</div>
+            </div>
+            <span class="cc-badge ${badgeClass}">${badgeLabel}</span>
+          </div>
+          <div class="cc-stats">
+            <div class="cc-stat">
+              <div class="cs-label">Delegates</div>
+              <div class="cs-val">${count}</div>
+            </div>
+            <div class="cc-stat">
+              <div class="cs-label">Max</div>
+              <div class="cs-val">${maxD || "—"}</div>
+            </div>
+          </div>
+          ${maxD > 0 ? `
+          <div class="cc-prog-bar"><div class="cc-prog-fill" style="width:${pct}%"></div></div>
+          <div style="font-family:var(--font-mono);font-size:9.5px;color:var(--ivory-faint);margin-bottom:10px;">${pct}% filled</div>
+          ` : ""}
+          <div class="cc-meta-row">
+            ${c.portfolioFile ? `&#128196; ${c.portfolioFile}` : "No portfolio file"}
+            &nbsp;&nbsp;
+            ${c.studyGuide ? `<a href="${c.studyGuide}" target="_blank" style="color:var(--gold-dim);text-decoration:none;">Study Guide &#8599;</a>` : "No study guide"}
+          </div>
+          <div class="cc-actions-row">
+            <button class="btn btn-ghost btn-sm cm-edit-btn" data-id="${id}">&#9998; Edit</button>
+            <button class="btn btn-danger btn-sm cm-delete-btn" data-id="${id}" data-name="${c.name || id}">&#128465; Delete</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  /* ---- Edit click ---- */
+  document.addEventListener("click", e => {
+    const editBtn = e.target.closest(".cm-edit-btn");
+    if (!editBtn) return;
+    const id = editBtn.dataset.id;
+    const entry = committeeCache.find(x => x.id === id);
+    if (!entry) return;
+    const c = entry.data;
+    cmEditId.value = id;
+    cmName.value = c.name || "";
+    cmShortName.value = c.shortName || "";
+    cmDescription.value = c.description || "";
+    cmDisplayOrder.value = c.displayOrder || "";
+    cmMaxDelegates.value = c.maxDelegates || "";
+    cmPortfolioFile.value = c.portfolioFile || "";
+    cmStudyGuide.value = c.studyGuide || "";
+    cmActive.checked = c.active !== false;
+    openCmModal("Edit Committee");
+  });
+
+  /* ---- Delete click ---- */
+  document.addEventListener("click", e => {
+    const delBtn = e.target.closest(".cm-delete-btn");
+    if (!delBtn) return;
+    openDeleteModal(delBtn.dataset.id, delBtn.dataset.name);
+  });
+
+  /* ---- Refresh button ---- */
+  cmRefreshBtn.addEventListener("click", () => renderCommitteeCards());
+
+  /* ---- Auto-load when section activates ---- */
+  document.querySelectorAll(".nav-item[data-section='committees']").forEach(btn => {
+    btn.addEventListener("click", () => renderCommitteeCards());
+  });
+
+  /* ---- Initial load ---- */
+  refreshAllCommitteeDropdowns();
+}
+
+/* ============================================================
+   SMART NOTIFICATIONS — V2.5
+   ============================================================ */
+function initSmartNotifications() {
+  const recipientSel    = document.getElementById("notifRecipient");
+  const committeeField  = document.getElementById("notifCommitteeField");
+
+  if (!recipientSel) return;
+
+  recipientSel.addEventListener("change", () => {
+    committeeField.style.display = recipientSel.value === "committee" ? "block" : "none";
+  });
+
+  /* Upgrade publish button to use recipient targeting */
+  const origPublishBtn = document.getElementById("publishBtn");
+  if (!origPublishBtn) return;
+
+  origPublishBtn.addEventListener("click", async function handler(e) {
+    // Remove original listener re-bind guard — handled by replacement below
+  }, { once: false });
+
+  /* We replace the publish logic by cloning the button */
+  const newPublishBtn = origPublishBtn.cloneNode(true);
+  origPublishBtn.parentNode.replaceChild(newPublishBtn, origPublishBtn);
+
+  newPublishBtn.addEventListener("click", async () => {
+    const title     = document.getElementById("notificationTitle").value.trim();
+    const message   = document.getElementById("notificationMessage").value.trim();
+    const recipient = recipientSel.value;
+    const committee = document.getElementById("notifCommitteeSelect").value;
+
+    if (!title || !message) { alert("Please fill title and message."); return; }
+    if (recipient === "committee" && !committee) { alert("Please select a committee."); return; }
+
+    const docData = {
+      title,
+      message,
+      priority: selectedPriority,
+      recipient,
+      committeeTarget: recipient === "committee" ? committee : null,
+      createdBy: currentAdminCode,
+      createdAt: serverTimestamp()
+    };
+
+    try {
+      await addDoc(collection(db, "notifications"), docData);
+      await addDoc(collection(db, "adminActivityLogs"), {
+        actor: currentAdminCode,
+        action: `Published notification — "${title}" → ${recipient === "committee" ? committee : recipient}`,
+        timestamp: serverTimestamp()
+      });
+      alert("Notification Published");
+      document.getElementById("notificationTitle").value = "";
+      document.getElementById("notificationMessage").value = "";
+      loadNotifications();
+      loadActivityLogs();
+      loadOverviewMetrics();
+      loadOverviewActivity();
+    } catch(err) {
+      console.error(err);
+      alert("Failed to publish notification.");
+    }
+  });
+}
+
+/* ============================================================
+   COMMITTEE EXPORTS — V2.5
+   ============================================================ */
+function initExports() {
+  const exCardsGrid   = document.getElementById("exCardsGrid");
+  const exRefreshBtn  = document.getElementById("exRefreshBtn");
+  const exExportAllBtn= document.getElementById("exExportAllBtn");
+
+  async function renderExportCards() {
+    exCardsGrid.innerHTML = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--ivory-faint);letter-spacing:0.1em;padding:20px 0;">LOADING…</div>`;
+    await loadCommitteeCache();
+
+    // Get delegate counts
+    let delegateCounts = {};
+    let delegatesByCommittee = {};
+    try {
+      const delSnap = await getDocs(collection(db, "delegates"));
+      delSnap.forEach(d => {
+        const dd = d.data();
+        const cp = (dd.committeePreference || "").trim();
+        if (!cp) return;
+        delegateCounts[cp] = (delegateCounts[cp] || 0) + 1;
+        if (!delegatesByCommittee[cp]) delegatesByCommittee[cp] = [];
+        delegatesByCommittee[cp].push(dd);
+      });
+    } catch(e) { console.warn(e); }
+
+    if (committeeCache.length === 0) {
+      exCardsGrid.innerHTML = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--ivory-faint);padding:20px 0;">NO COMMITTEES FOUND</div>`;
+      return;
+    }
+
+    exCardsGrid.innerHTML = committeeCache.map(({ id, data: c }) => {
+      const key = c.shortName || c.name || id;
+      const count = delegateCounts[key] || delegateCounts[c.name] || 0;
+      return `
+        <div class="export-card">
+          <div class="ec-name">${c.shortName || id}</div>
+          <div class="ec-count">${c.name || ""} &nbsp;·&nbsp; ${count} delegate${count !== 1 ? "s" : ""}</div>
+          <div class="ec-btns">
+            <button class="btn btn-ghost btn-sm ex-csv-btn" data-key="${key}" data-name="${c.name || id}">&#8659; CSV</button>
+            <button class="btn btn-primary btn-sm ex-xls-btn" data-key="${key}" data-name="${c.name || id}">&#8659; Excel</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    /* Store for export-all */
+    exCardsGrid.dataset.delegatesJson = JSON.stringify(delegatesByCommittee);
+  }
+
+  function delegatesToRows(delegates) {
+    return delegates.map(d => ({
+      Name: d.name || "",
+      Phone: d.phone || "",
+      DOB: d.dob || "",
+      Committee: d.committeePreference || "",
+      Portfolio: d.portfolio || "",
+      Allocated: d.allocated ? "Yes" : "No",
+      Email: d.email || "",
+      Institution: d.institution || ""
+    }));
+  }
+
+  function downloadCSV(rows, filename) {
+    if (!rows.length) { alert("No delegates in this committee."); return; }
+    const headers = Object.keys(rows[0]);
+    const csv = [headers.join(","), ...rows.map(r => headers.map(h => `"${(r[h] || "").toString().replace(/"/g,'""')}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  }
+
+  function downloadXLSX(rows, filename) {
+    if (!rows.length) { alert("No delegates in this committee."); return; }
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Delegates");
+    XLSX.writeFile(wb, filename);
+  }
+
+  document.addEventListener("click", async e => {
+    const csvBtn = e.target.closest(".ex-csv-btn");
+    if (csvBtn) {
+      const key  = csvBtn.dataset.key;
+      const name = csvBtn.dataset.name;
+      const stored = exCardsGrid.dataset.delegatesJson;
+      let byCommittee = stored ? JSON.parse(stored) : {};
+      let delegates = byCommittee[key] || [];
+      if (!delegates.length) {
+        // fallback: re-query
+        try {
+          const { query: fsQuery, where } = await import("https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js");
+          const snap = await getDocs(fsQuery(collection(db, "delegates"), where("committeePreference", "==", key)));
+          snap.forEach(d => delegates.push(d.data()));
+        } catch(er) { console.warn(er); }
+      }
+      downloadCSV(delegatesToRows(delegates), `${key}_delegates.csv`);
+      return;
+    }
+
+    const xlsBtn = e.target.closest(".ex-xls-btn");
+    if (xlsBtn) {
+      const key  = xlsBtn.dataset.key;
+      const name = xlsBtn.dataset.name;
+      const stored = exCardsGrid.dataset.delegatesJson;
+      let byCommittee = stored ? JSON.parse(stored) : {};
+      let delegates = byCommittee[key] || [];
+      if (!delegates.length) {
+        try {
+          const { query: fsQuery, where } = await import("https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js");
+          const snap = await getDocs(fsQuery(collection(db, "delegates"), where("committeePreference", "==", key)));
+          snap.forEach(d => delegates.push(d.data()));
+        } catch(er) { console.warn(er); }
+      }
+      downloadXLSX(delegatesToRows(delegates), `${key}_delegates.xlsx`);
+      return;
+    }
+  });
+
+  exExportAllBtn.addEventListener("click", async () => {
+    const stored = exCardsGrid.dataset.delegatesJson;
+    if (!stored) { alert("Please load the exports page first."); return; }
+    const byCommittee = JSON.parse(stored);
+    if (!committeeCache.length) { alert("No committees found."); return; }
+
+    try {
+      const JSZip = (await import("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js")).default;
+      alert("JSZip not available via import. Downloading individual Excel files instead.");
+    } catch(e) {
+      // JSZip not available; fall back to one Excel workbook with multiple sheets
+    }
+
+    // Fallback: single workbook, one sheet per committee
+    const wb = XLSX.utils.book_new();
+    let hasData = false;
+    committeeCache.forEach(({ id, data: c }) => {
+      const key = c.shortName || c.name || id;
+      const delegates = byCommittee[key] || [];
+      const rows = delegatesToRows(delegates);
+      if (rows.length === 0) rows.push({ Name:"", Phone:"", DOB:"", Committee:"", Portfolio:"", Allocated:"", Email:"", Institution:"" });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, (c.shortName || id).substring(0, 31));
+      hasData = true;
+    });
+    if (hasData) XLSX.writeFile(wb, `MUNITE_All_Committees_${Date.now()}.xlsx`);
+  });
+
+  exRefreshBtn.addEventListener("click", renderExportCards);
+
+  document.querySelectorAll(".nav-item[data-section='exports']").forEach(btn => {
+    btn.addEventListener("click", renderExportCards);
+  });
+}
+
+/* ============================================================
+   ADVANCED REPORTS — V2.5
+   ============================================================ */
+function initReports() {
+  const rpGrid       = document.getElementById("rpGrid");
+  const rpRefreshBtn = document.getElementById("rpRefreshBtn");
+
+  async function renderReports() {
+    rpGrid.innerHTML = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--ivory-faint);letter-spacing:0.1em;padding:30px 0;">LOADING REPORTS…</div>`;
+    await loadCommitteeCache();
+
+    try {
+      const delSnap  = await getDocs(collection(db, "delegates"));
+      const notifSnap= await getDocs(collection(db, "notifications"));
+
+      let total = 0, allocated = 0, registered = 0, unallocated = 0;
+      const committeeCounts = {}, institutionCounts = {};
+
+      delSnap.forEach(d => {
+        total++;
+        const dd = d.data();
+        if (dd.allocated === true) allocated++; else unallocated++;
+        if (dd.isRegistered === true) registered++;
+        const cp = (dd.committeePreference || "Unassigned").trim();
+        committeeCounts[cp] = (committeeCounts[cp] || 0) + 1;
+        const inst = (dd.institution || "Unknown").trim();
+        institutionCounts[inst] = (institutionCounts[inst] || 0) + 1;
+      });
+
+      const notifTotal = notifSnap.size;
+      let notifByRecipient = {};
+      notifSnap.forEach(d => {
+        const r = d.data().recipient || "everyone";
+        notifByRecipient[r] = (notifByRecipient[r] || 0) + 1;
+      });
+
+      const topCommittees = Object.entries(committeeCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+      const topInstitutions = Object.entries(institutionCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+      const pct = total ? Math.round(allocated/total*100) : 0;
+      const regPct = total ? Math.round(registered/total*100) : 0;
+
+      function exportReportCSV(rows, filename) {
+        const headers = Object.keys(rows[0] || {});
+        const csv = [headers.join(","), ...rows.map(r => headers.map(h=>`"${(r[h]||"").toString().replace(/"/g,'""')}"`).join(","))].join("\n");
+        const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+      }
+
+      function exportReportXLSX(rows, sheetName, filename) {
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, filename);
+      }
+
+      rpGrid.innerHTML = `
+        <div class="report-card">
+          <div class="rc-title">Registration Summary</div>
+          <div class="rc-sub">Live delegate registration data</div>
+          <div class="rc-data">
+            <div class="rc-row"><span class="rc-key">Total Delegates</span><span class="rc-val">${total}</span></div>
+            <div class="rc-row"><span class="rc-key">Registered</span><span class="rc-val">${registered} (${regPct}%)</span></div>
+            <div class="rc-row"><span class="rc-key">Allocated</span><span class="rc-val">${allocated} (${pct}%)</span></div>
+            <div class="rc-row"><span class="rc-key">Unallocated</span><span class="rc-val">${unallocated}</span></div>
+          </div>
+          <div class="rc-btns">
+            <button class="btn btn-ghost btn-sm" id="rpRegCSV">&#8659; CSV</button>
+            <button class="btn btn-primary btn-sm" id="rpRegXLS">&#8659; Excel</button>
+          </div>
+        </div>
+
+        <div class="report-card">
+          <div class="rc-title">Allocation Summary</div>
+          <div class="rc-sub">Portfolio allocation breakdown</div>
+          <div class="rc-data">
+            <div class="rc-row"><span class="rc-key">Allocated</span><span class="rc-val">${allocated}</span></div>
+            <div class="rc-row"><span class="rc-key">Pending</span><span class="rc-val">${unallocated}</span></div>
+            <div class="rc-row"><span class="rc-key">Allocation %</span><span class="rc-val">${pct}%</span></div>
+          </div>
+          <div class="rc-btns">
+            <button class="btn btn-ghost btn-sm" id="rpAllocCSV">&#8659; CSV</button>
+            <button class="btn btn-primary btn-sm" id="rpAllocXLS">&#8659; Excel</button>
+          </div>
+        </div>
+
+        <div class="report-card">
+          <div class="rc-title">Committee Distribution</div>
+          <div class="rc-sub">Delegates per committee</div>
+          <div class="rc-data">
+            ${topCommittees.map(([name,count])=>`<div class="rc-row"><span class="rc-key">${name}</span><span class="rc-val">${count}</span></div>`).join("")}
+            ${topCommittees.length === 0 ? `<div class="rc-row"><span class="rc-key" style="color:var(--ivory-faint);">No data</span></div>` : ""}
+          </div>
+          <div class="rc-btns">
+            <button class="btn btn-ghost btn-sm" id="rpCommCSV">&#8659; CSV</button>
+            <button class="btn btn-primary btn-sm" id="rpCommXLS">&#8659; Excel</button>
+          </div>
+        </div>
+
+        <div class="report-card">
+          <div class="rc-title">Institution Distribution</div>
+          <div class="rc-sub">Top participating institutions</div>
+          <div class="rc-data">
+            ${topInstitutions.map(([name,count])=>`<div class="rc-row"><span class="rc-key">${name}</span><span class="rc-val">${count}</span></div>`).join("")}
+            ${topInstitutions.length === 0 ? `<div class="rc-row"><span class="rc-key" style="color:var(--ivory-faint);">No data</span></div>` : ""}
+          </div>
+          <div class="rc-btns">
+            <button class="btn btn-ghost btn-sm" id="rpInstCSV">&#8659; CSV</button>
+            <button class="btn btn-primary btn-sm" id="rpInstXLS">&#8659; Excel</button>
+          </div>
+        </div>
+
+        <div class="report-card">
+          <div class="rc-title">Notification Statistics</div>
+          <div class="rc-sub">Breakdown by recipient type</div>
+          <div class="rc-data">
+            <div class="rc-row"><span class="rc-key">Total Published</span><span class="rc-val">${notifTotal}</span></div>
+            ${Object.entries(notifByRecipient).map(([r,c])=>`<div class="rc-row"><span class="rc-key">${r}</span><span class="rc-val">${c}</span></div>`).join("")}
+          </div>
+          <div class="rc-btns">
+            <button class="btn btn-ghost btn-sm" id="rpNotifCSV">&#8659; CSV</button>
+            <button class="btn btn-primary btn-sm" id="rpNotifXLS">&#8659; Excel</button>
+          </div>
+        </div>
+      `;
+
+      // Build data sets for export
+      const regRows = [{ Total: total, Registered: registered, RegistrationPct: regPct+"%", Allocated: allocated, Unallocated: unallocated, AllocationPct: pct+"%" }];
+      const allocRows = [{ Allocated: allocated, Pending: unallocated, AllocationPct: pct+"%" }];
+      const commRows = Object.entries(committeeCounts).sort((a,b)=>b[1]-a[1]).map(([Committee,Count])=>({Committee,Count}));
+      const instRows = Object.entries(institutionCounts).sort((a,b)=>b[1]-a[1]).map(([Institution,Count])=>({Institution,Count}));
+      const notifRows = Object.entries(notifByRecipient).map(([Recipient,Count])=>({Recipient,Count}));
+
+      document.getElementById("rpRegCSV").onclick  = () => exportReportCSV(regRows,  "registration_summary.csv");
+      document.getElementById("rpRegXLS").onclick  = () => exportReportXLSX(regRows,  "Registration", "registration_summary.xlsx");
+      document.getElementById("rpAllocCSV").onclick = () => exportReportCSV(allocRows, "allocation_summary.csv");
+      document.getElementById("rpAllocXLS").onclick = () => exportReportXLSX(allocRows,"Allocation",   "allocation_summary.xlsx");
+      document.getElementById("rpCommCSV").onclick  = () => exportReportCSV(commRows,  "committee_distribution.csv");
+      document.getElementById("rpCommXLS").onclick  = () => exportReportXLSX(commRows, "Committees",   "committee_distribution.xlsx");
+      document.getElementById("rpInstCSV").onclick  = () => exportReportCSV(instRows,  "institution_distribution.csv");
+      document.getElementById("rpInstXLS").onclick  = () => exportReportXLSX(instRows, "Institutions", "institution_distribution.xlsx");
+      document.getElementById("rpNotifCSV").onclick = () => exportReportCSV(notifRows, "notification_stats.csv");
+      document.getElementById("rpNotifXLS").onclick = () => exportReportXLSX(notifRows,"Notifications","notification_stats.xlsx");
+
+    } catch(e) {
+      console.error("renderReports:", e);
+      rpGrid.innerHTML = `<div style="font-family:var(--font-mono);font-size:11px;color:#d18a8a;padding:20px 0;">FAILED TO LOAD REPORTS: ${e.message}</div>`;
+    }
+  }
+
+  rpRefreshBtn.addEventListener("click", renderReports);
+  document.querySelectorAll(".nav-item[data-section='reports']").forEach(btn => {
+    btn.addEventListener("click", renderReports);
+  });
+}
 
 async function loadLoginHistory() {
   try {

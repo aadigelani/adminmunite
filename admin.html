@@ -1726,11 +1726,8 @@ tbody tr:last-child td{ border-bottom:none; }
             <span class="ic">&#8981;</span>
             <input class="input" type="text" placeholder="Search allocations&hellip;">
           </div>
-          <select class="select">
-            <option>All Committees</option>
-            <option>UNSC</option>
-            <option>UNHRC</option>
-            <option>DISEC</option>
+          <select class="select" id="allocationCommitteeFilter">
+            <option value="">All Committees</option>
           </select>
         </div>
         <div class="toolbar-right">
@@ -2058,7 +2055,8 @@ import {
   setDoc,
   getDoc,
   serverTimestamp,
-  writeBatch
+  writeBatch,
+  onSnapshot
 }
 from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
@@ -2882,11 +2880,13 @@ initCommitteeManagement();
 initExports();
 initReports();
 initSmartNotifications();
+startCommitteeRealtimeSync();
 
 /* ============================================================
    SHARED COMMITTEE CACHE — V2.5
    ============================================================ */
 let committeeCache = []; // { id, data }
+window._committeeCache = committeeCache; // bridge for bulk import IIFE
 
 async function loadCommitteeCache() {
   try {
@@ -2894,28 +2894,85 @@ async function loadCommitteeCache() {
     committeeCache = [];
     snap.forEach(d => committeeCache.push({ id: d.id, data: d.data() }));
     committeeCache.sort((a, b) => (a.data.displayOrder || 99) - (b.data.displayOrder || 99));
+    window._committeeCache = committeeCache;
   } catch(e) { console.warn("loadCommitteeCache:", e); }
 }
 
 async function refreshAllCommitteeDropdowns() {
   await loadCommitteeCache();
-  // Delegate filter
+  _applyCommitteeCacheToAllDropdowns();
+}
+
+function _applyCommitteeCacheToAllDropdowns() {
+  const opts = committeeCache.map(c =>
+    `<option value="${c.data.shortName || c.id}">${c.data.name || c.id}</option>`
+  ).join("");
+  const optsOrEmpty = opts || '<option value="">No committees yet</option>';
+
+  // Delegate filter (toolbar)
   const filterSel = document.getElementById("committeeFilterSelect");
   if (filterSel) {
-    filterSel.innerHTML = '<option value="">All Committees</option>' +
-      committeeCache.map(c => `<option value="${c.data.shortName || c.id}">${c.data.name || c.id}</option>`).join("");
+    const prev = filterSel.value;
+    filterSel.innerHTML = '<option value="">All Committees</option>' + opts;
+    filterSel.value = prev;
   }
-  // Add delegate slideover
+
+  // Add / Edit delegate slideover
   const addSel = document.getElementById("delegateCommittee");
   if (addSel) {
-    addSel.innerHTML = committeeCache.map(c => `<option value="${c.data.shortName || c.id}">${c.data.name || c.id}</option>`).join("") || '<option value="">No committees yet</option>';
+    const prev = addSel.value;
+    addSel.innerHTML = optsOrEmpty;
+    addSel.value = prev;
   }
+
   // Notification committee
   const notifSel = document.getElementById("notifCommitteeSelect");
   if (notifSel) {
-    notifSel.innerHTML = '<option value="">— Select Committee —</option>' +
-      committeeCache.map(c => `<option value="${c.data.shortName || c.id}">${c.data.name || c.id}</option>`).join("");
+    const prev = notifSel.value;
+    notifSel.innerHTML = '<option value="">— Select Committee —</option>' + opts;
+    notifSel.value = prev;
   }
+
+  // Allocations toolbar filter
+  const allocSel = document.getElementById("allocationCommitteeFilter");
+  if (allocSel) {
+    const prev = allocSel.value;
+    allocSel.innerHTML = '<option value="">All Committees</option>' + opts;
+    allocSel.value = prev;
+  }
+
+  // Bulk Import edit modal committee input — rebuild the suggestion list reference
+  if (window._biKnownCommittees !== undefined) {
+    window._biKnownCommittees = committeeCache.map(c => ({
+      name: c.data.name || c.id,
+      short: c.data.shortName || c.id
+    }));
+  }
+}
+
+/* Real-time listener — fires whenever committees collection changes */
+function startCommitteeRealtimeSync() {
+  onSnapshot(collection(db, "committees"), snapshot => {
+    committeeCache = [];
+    snapshot.forEach(d => committeeCache.push({ id: d.id, data: d.data() }));
+    committeeCache.sort((a, b) => (a.data.displayOrder || 99) - (b.data.displayOrder || 99));
+    window._committeeCache = committeeCache;
+    // Sync the bulk import bridge
+    window._biKnownCommittees = committeeCache.map(c => ({
+      name: c.data.name || c.id,
+      short: c.data.shortName || c.id
+    }));
+    _applyCommitteeCacheToAllDropdowns();
+    // Re-render exports and reports if their sections are currently active
+    const activeSection = document.querySelector(".section.active");
+    if (activeSection) {
+      if (activeSection.id === "sec-exports")   document.getElementById("exRefreshBtn")?.click();
+      if (activeSection.id === "sec-reports")   document.getElementById("rpRefreshBtn")?.click();
+      if (activeSection.id === "sec-committees") document.getElementById("cmRefreshBtn")?.click();
+    }
+  }, err => {
+    console.warn("Committee real-time sync error:", err);
+  });
 }
 
 /* ============================================================
@@ -3667,8 +3724,24 @@ document.addEventListener(
    ============================================================ */
 (function(){
 
-  /* ---- Known committees (sync with your Firestore / extend as needed) ---- */
-  const KNOWN_COMMITTEES = ["UNSC","UNHRC","DISEC","ECOSOC","Lok Sabha","ICJ","WHO","AIPPM","UNGA"];
+  /* ---- Committee list — populated from Firestore via window._biKnownCommittees ---- */
+  /* No hardcoded committee names. Always read from committeeCache via the shared bridge. */
+  window._biKnownCommittees = []; // { name, short } — filled by startCommitteeRealtimeSync → _applyCommitteeCacheToAllDropdowns
+
+  function getBiCommittees() {
+    // Primary: shared cache bridge
+    if (window._biKnownCommittees && window._biKnownCommittees.length > 0) {
+      return window._biKnownCommittees;
+    }
+    // Fallback: build from committeeCache if it exists on window
+    if (window._committeeCache && window._committeeCache.length > 0) {
+      return window._committeeCache.map(c => ({
+        name: c.data.name || c.id,
+        short: c.data.shortName || c.id
+      }));
+    }
+    return [];
+  }
 
   /* ---- State ---- */
   let biRows = [];         // parsed + validated rows
@@ -3826,8 +3899,19 @@ document.addEventListener(
       warns.push("Duplicate Phone");
     }
 
-    if (row.committee && !KNOWN_COMMITTEES.map(c=>c.toLowerCase()).includes(row.committee.toLowerCase())) {
-      if (!committeeSuggestion) errors.push("Invalid Committee");
+    if (row.committee) {
+      const committees = getBiCommittees();
+      if (committees.length > 0) {
+        const inputLower = row.committee.toLowerCase().replace(/[^a-z0-9]/g,"");
+        const exactMatch = committees.some(c =>
+          c.name.toLowerCase().replace(/[^a-z0-9]/g,"") === inputLower ||
+          c.short.toLowerCase().replace(/[^a-z0-9]/g,"") === inputLower
+        );
+        if (!exactMatch && !committeeSuggestion) {
+          errors.push("Invalid Committee");
+        }
+      }
+      // If committee list not yet loaded from Firestore, skip validation (don't penalise)
     }
 
     let status;
@@ -3841,10 +3925,17 @@ document.addEventListener(
   function suggestCommittee(input) {
     if (!input) return null;
     const lower = input.toLowerCase().replace(/[^a-z0-9]/g,"");
-    for (const c of KNOWN_COMMITTEES) {
-      const cl = c.toLowerCase().replace(/[^a-z0-9]/g,"");
-      if (cl === lower) return null; // exact match
-      if (cl.includes(lower) || lower.includes(cl) || levenshtein(cl, lower) <= 3) return c;
+    const committees = getBiCommittees();
+    for (const c of committees) {
+      const nameLower  = c.name.toLowerCase().replace(/[^a-z0-9]/g,"");
+      const shortLower = c.short.toLowerCase().replace(/[^a-z0-9]/g,"");
+      if (nameLower === lower || shortLower === lower) return null; // exact match
+      if (
+        nameLower.includes(lower) || lower.includes(nameLower) || levenshtein(nameLower, lower) <= 3 ||
+        shortLower.includes(lower) || lower.includes(shortLower) || levenshtein(shortLower, lower) <= 3
+      ) {
+        return c.name; // return the full name as suggestion
+      }
     }
     return null;
   }
@@ -3987,15 +4078,38 @@ document.addEventListener(
   });
 
   editCommittee.addEventListener("input", () => {
-    const sug = suggestCommittee(editCommittee.value);
-    if (sug) {
-      editCommitteeSuggest.innerHTML = `<span class="suggest-pill" style="cursor:pointer;" id="editSugPill">&#128161; Did you mean <strong>${escHtml(sug)}</strong>? <span class="sp-apply-all">Apply</span></span>`;
-      document.getElementById("editSugPill").addEventListener("click", () => {
-        editCommittee.value = sug;
-        editCommitteeSuggest.innerHTML = "";
+    const val = editCommittee.value.trim();
+    if (!val) { editCommitteeSuggest.innerHTML = ""; return; }
+
+    // Show matching committees as clickable pills
+    const committees = getBiCommittees();
+    const inputLower = val.toLowerCase();
+    const matches = committees.filter(c =>
+      c.name.toLowerCase().includes(inputLower) ||
+      c.short.toLowerCase().includes(inputLower)
+    ).slice(0, 5);
+
+    if (matches.length > 0) {
+      editCommitteeSuggest.innerHTML = matches.map(c =>
+        `<span class="suggest-pill" style="cursor:pointer;margin-right:4px;" data-cmname="${escHtml(c.name)}">&#128161; ${escHtml(c.name)}</span>`
+      ).join("");
+      editCommitteeSuggest.querySelectorAll(".suggest-pill").forEach(pill => {
+        pill.addEventListener("click", () => {
+          editCommittee.value = pill.dataset.cmname;
+          editCommitteeSuggest.innerHTML = "";
+        });
       });
     } else {
-      editCommitteeSuggest.innerHTML = "";
+      const sug = suggestCommittee(val);
+      if (sug) {
+        editCommitteeSuggest.innerHTML = `<span class="suggest-pill" style="cursor:pointer;" id="editSugPill">&#128161; Did you mean <strong>${escHtml(sug)}</strong>? <span class="sp-apply-all">Apply</span></span>`;
+        document.getElementById("editSugPill").addEventListener("click", () => {
+          editCommittee.value = sug;
+          editCommitteeSuggest.innerHTML = "";
+        });
+      } else {
+        editCommitteeSuggest.innerHTML = "";
+      }
     }
   });
 

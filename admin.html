@@ -1315,7 +1315,7 @@ tbody tr:last-child td{ border-bottom:none; }
         </div>
         <div class="meta">
           <strong>MUNITE 2026</strong><br>
-          Last synced 09:42:11 IST
+          Last synced <span id="overviewSyncTime">—</span>
         </div>
       </div>
 
@@ -1323,22 +1323,22 @@ tbody tr:last-child td{ border-bottom:none; }
         <div class="metric-card">
           <div class="m-label">Total Delegates</div>
           <div id="totalDelegatesMetric" class="m-value">0</div>
-          <div class="m-foot">&#8593; 14 registered today</div>
+          <div class="m-foot" id="metricFootTotal">—</div>
         </div>
         <div class="metric-card">
           <div class="m-label">Allocated Delegates</div>
           <div id="allocatedMetric" class="m-value">0</div>
-          <div class="m-foot">79% of total</div>
+          <div class="m-foot" id="metricFootAllocated">—</div>
         </div>
         <div class="metric-card">
           <div class="m-label">Pending Delegates</div>
           <div id="pendingMetric" class="m-value">0</div>
-          <div class="m-foot neutral">Awaiting allocation</div>
+          <div class="m-foot neutral" id="metricFootPending">Awaiting allocation</div>
         </div>
         <div class="metric-card">
           <div class="m-label">Notifications Sent</div>
           <div id="notificationMetric" class="m-value">0</div>
-          <div class="m-foot neutral">3 published today</div>
+          <div class="m-foot neutral" id="metricFootNotif">—</div>
         </div>
       </div>
 
@@ -1367,9 +1367,9 @@ tbody tr:last-child td{ border-bottom:none; }
             </div>
           </div>
 
-          <p style="color:var(--ivory-faint)">
-            Committee analytics coming soon.
-          </p>
+          <div id="committeeDistributionList">
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.1em;">LOADING…</div>
+          </div>
         </div>
 
         <div class="panel">
@@ -1378,16 +1378,28 @@ tbody tr:last-child td{ border-bottom:none; }
             Conference-wide
           </p>
 
-          <div class="progress-ring-wrap">
-            ...
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+            <div style="background:rgba(200,160,66,0.05);border:1px solid rgba(200,160,66,0.15);border-radius:var(--radius);padding:14px 16px;">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ivory-faint);margin-bottom:6px;">Allocated</div>
+              <div id="allocProgressAllocated" style="font-family:var(--font-display);font-size:28px;color:var(--ivory);">0</div>
+            </div>
+            <div style="background:rgba(200,160,66,0.05);border:1px solid rgba(200,160,66,0.15);border-radius:var(--radius);padding:14px 16px;">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ivory-faint);margin-bottom:6px;">Pending</div>
+              <div id="allocProgressPending" style="font-family:var(--font-display);font-size:28px;color:var(--ivory);">0</div>
+            </div>
+            <div style="background:rgba(200,160,66,0.05);border:1px solid rgba(200,160,66,0.15);border-radius:var(--radius);padding:14px 16px;">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ivory-faint);margin-bottom:6px;">Total</div>
+              <div id="allocProgressTotal" style="font-family:var(--font-display);font-size:28px;color:var(--ivory);">0</div>
+            </div>
+            <div style="background:rgba(200,160,66,0.05);border:1px solid rgba(200,160,66,0.15);border-radius:var(--radius);padding:14px 16px;">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ivory-faint);margin-bottom:6px;">Allocation %</div>
+              <div id="allocationPercent" style="font-family:var(--font-display);font-size:28px;color:var(--gold-bright);">0%</div>
+            </div>
           </div>
-
-          <div
-            id="allocationProgressText"
-            style="margin-top:12px;color:var(--ivory-faint);">
-            0 / 0 allocated
+          <div style="height:7px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;border:1px solid rgba(200,160,66,0.1);margin-bottom:10px;">
+            <div id="allocProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold-dim),var(--gold-bright));transition:width 0.6s ease;"></div>
           </div>
-          <div class="big" id="allocationPercent">0%</div>
+          <div id="allocationProgressText" style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.08em;">0 / 0 allocated</div>
         </div>
       </div>
       </div>
@@ -2284,6 +2296,7 @@ document.getElementById('publishBtn')
     loadNotifications();
     loadActivityLogs();
     loadOverviewMetrics();
+    loadOverviewActivity();
   } catch (err) {
 
     console.error(err);
@@ -2352,73 +2365,84 @@ async function loadActivityLogs() {
 
 }
 async function loadOverviewMetrics() {
-
   try {
-
-    const delegatesSnapshot =
-      await getDocs(
-        collection(db, "delegates")
-      );
-
+    const delegatesSnapshot = await getDocs(collection(db, "delegates"));
     let totalDelegates = 0;
     let allocatedDelegates = 0;
+    const committeeCounts = {};
 
     delegatesSnapshot.forEach(docSnap => {
-
       totalDelegates++;
-
       const d = docSnap.data();
-
-      if (d.allocated === true) {
-        allocatedDelegates++;
-      }
-
+      if (d.allocated === true) allocatedDelegates++;
+      const com = (d.committeePreference || d.committee || "Unassigned").trim();
+      committeeCounts[com] = (committeeCounts[com] || 0) + 1;
     });
 
-    const pendingDelegates =
-      totalDelegates - allocatedDelegates;
-    const pct =
-      totalDelegates
-        ? Math.round(
-            allocatedDelegates /
-            totalDelegates * 100
-          )
-        : 0;
-    document.getElementById(
-      "allocationPercent"
-    ).textContent = `${pct}%`;
-    document.getElementById(
-      "allocationProgressText"
-    ).textContent =
-      `${allocatedDelegates} / ${totalDelegates} allocated`;
-    document.getElementById(
-      "totalDelegatesMetric"
-    ).textContent = totalDelegates;
+    const pendingDelegates = totalDelegates - allocatedDelegates;
+    const pct = totalDelegates ? Math.round(allocatedDelegates / totalDelegates * 100) : 0;
 
-    document.getElementById(
-      "allocatedMetric"
-    ).textContent = allocatedDelegates;
+    // Metric cards
+    document.getElementById("totalDelegatesMetric").textContent = totalDelegates;
+    document.getElementById("allocatedMetric").textContent = allocatedDelegates;
+    document.getElementById("pendingMetric").textContent = pendingDelegates;
 
-    document.getElementById(
-      "pendingMetric"
-    ).textContent = pendingDelegates;
+    // Metric card footers
+    const footTotal = document.getElementById("metricFootTotal");
+    if (footTotal) footTotal.textContent = totalDelegates === 1 ? "1 delegate in database" : `${totalDelegates} delegates in database`;
+    const footAllocated = document.getElementById("metricFootAllocated");
+    if (footAllocated) footAllocated.textContent = `Allocated ${allocatedDelegates} / ${totalDelegates}`;
+    const footPending = document.getElementById("metricFootPending");
+    if (footPending) footPending.textContent = pendingDelegates === 0 ? "All delegates allocated" : `${pendingDelegates} awaiting allocation`;
 
-    const notificationsSnapshot =
-      await getDocs(
-        collection(db, "notifications")
-      );
+    // Allocation Progress card
+    const elPct = document.getElementById("allocationPercent");
+    if (elPct) elPct.textContent = `${pct}%`;
+    const elText = document.getElementById("allocationProgressText");
+    if (elText) elText.textContent = `${allocatedDelegates} / ${totalDelegates} allocated`;
+    const elBar = document.getElementById("allocProgressBar");
+    if (elBar) elBar.style.width = `${pct}%`;
+    const elAlloc = document.getElementById("allocProgressAllocated");
+    if (elAlloc) elAlloc.textContent = allocatedDelegates;
+    const elPend = document.getElementById("allocProgressPending");
+    if (elPend) elPend.textContent = pendingDelegates;
+    const elTot = document.getElementById("allocProgressTotal");
+    if (elTot) elTot.textContent = totalDelegates;
 
-    document.getElementById(
-      "notificationMetric"
-    ).textContent =
-      notificationsSnapshot.size;
+    // Committee distribution
+    const distList = document.getElementById("committeeDistributionList");
+    if (distList) {
+      const sorted = Object.entries(committeeCounts).sort((a, b) => b[1] - a[1]);
+      const max = sorted.length ? sorted[0][1] : 1;
+      if (sorted.length === 0) {
+        distList.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.1em;">NO DELEGATES YET</div>`;
+      } else {
+        distList.innerHTML = sorted.map(([name, count]) => {
+          const barPct = Math.round(count / max * 100);
+          const totalPct = totalDelegates ? Math.round(count / totalDelegates * 100) : 0;
+          return `<div class="committee-row">
+            <div class="c-name">${name}</div>
+            <div class="c-bar"><div class="c-fill" style="width:${barPct}%"></div></div>
+            <div class="c-pct">${count}</div>
+            <div style="width:34px;text-align:right;font-family:var(--font-mono);color:var(--gold-dim);font-size:10px;">${totalPct}%</div>
+          </div>`;
+        }).join("");
+      }
+    }
+
+    // Notifications
+    const notificationsSnapshot = await getDocs(collection(db, "notifications"));
+    document.getElementById("notificationMetric").textContent = notificationsSnapshot.size;
+    const footNotif = document.getElementById("metricFootNotif");
+    if (footNotif) footNotif.textContent = `${notificationsSnapshot.size} total published`;
+
+    // Sync time
+    const syncEl = document.getElementById("overviewSyncTime");
+    if (syncEl) syncEl.textContent = new Date().toLocaleTimeString("en-IN", { hour12: false }) + " IST";
 
   } catch(err) {
-
-    console.error(err);
-
+    console.error("loadOverviewMetrics:", err);
   }
-
 }
 async function loadAdminCodes() {
 
@@ -2490,45 +2514,30 @@ async function loadAdminCodes() {
 
 }
 async function loadOverviewActivity() {
-
-  const snapshot = await getDocs(
-    collection(db, "adminActivityLogs")
-  );
-
-  const feed =
-    document.getElementById("overviewActivityFeed");
-
-  let html = "";
-  let count = 0;
-
-  snapshot.forEach(docSnap => {
-
-    if (count >= 5) return;
-
-    const log = docSnap.data();
-
-    html += `
-      <li>
-        <span class="t-dot"></span>
-        <div class="t-body">
-          <p>
-            <strong>${log.actor}</strong>
-            ${log.action}
-          </p>
-          <span class="t-time">
-            ${log.timestamp
-              ? log.timestamp.toDate().toLocaleString()
-              : ""}
-          </span>
-        </div>
-      </li>
-    `;
-
-    count++;
-
-  });
-
-  feed.innerHTML = html;
+  const feed = document.getElementById("overviewActivityFeed");
+  try {
+    const { query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js");
+    const q = query(collection(db, "adminActivityLogs"), orderBy("timestamp", "desc"), limit(5));
+    const snapshot = await getDocs(q);
+    let html = "";
+    snapshot.forEach(docSnap => {
+      const log = docSnap.data();
+      const timeText = log.timestamp ? log.timestamp.toDate().toLocaleString() : "";
+      html += `
+        <li>
+          <span class="t-dot"></span>
+          <div class="t-body">
+            <p><strong>${log.actor || "—"}</strong> ${log.action || ""}</p>
+            <span class="t-time">${timeText}</span>
+          </div>
+        </li>
+      `;
+    });
+    feed.innerHTML = html || `<li style="padding:16px 0;font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.1em;">NO ACTIVITY YET</li>`;
+  } catch(err) {
+    console.error("loadOverviewActivity:", err);
+    feed.innerHTML = `<li style="padding:16px 0;font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);">COULD NOT LOAD ACTIVITY</li>`;
+  }
 }
 loadNotifications();
 loadDelegates();
@@ -2628,6 +2637,8 @@ document.addEventListener(
     );
 
     loadAdminCodes();
+    loadOverviewMetrics();
+    loadOverviewActivity();
 
 });
 document.addEventListener(
@@ -2659,6 +2670,8 @@ document.addEventListener(
     );
 
     loadAdminCodes();
+    loadOverviewMetrics();
+    loadOverviewActivity();
 
 });
 /* ============================================================
@@ -3114,6 +3127,8 @@ document.addEventListener(
     biSuccessPanel.style.display = "block";
 
     loadBulkImportHistory();
+    loadOverviewMetrics();
+    loadOverviewActivity();
   });
 
   /* ---- Import History ---- */

@@ -1101,6 +1101,7 @@ tbody tr:last-child td{ border-bottom:none; }
       <button class="nav-item" data-section="logs"><span class="glyph">&#9776;</span> Activity Logs</button>
       <button class="nav-item" data-section="settings"><span class="glyph">&#9881;</span> Settings</button>
       <button class="nav-item" data-section="bulkimport"><span class="glyph">&#8659;</span> Bulk Import</button>
+      <button class="nav-item" data-section="requests"><span class="glyph">✉</span>Partnership Requests</button>
     </nav>
 
     <div class="sidebar-footer">
@@ -1595,7 +1596,48 @@ tbody tr:last-child td{ border-bottom:none; }
         <!-- TODO: Replace with live Firestore collection `adminLoginHistory` -->
       </div>
     </section>
+    <section class="section" id="sec-requests">
 
+      <div class="topline">
+          <div>
+              <p class="eyebrow">Partnership Management</p>
+              <h1>Partnership Requests</h1>
+          </div>
+
+          <div class="meta">
+              Incoming enquiries
+          </div>
+      </div>
+
+      <div class="table-wrap">
+      <table>
+
+      <thead>
+      <tr>
+      <th>Institution</th>
+      <th>Contact</th>
+      <th>Email</th>
+      <th>Phone</th>
+      <th>City</th>
+      <th>Type</th>
+      <th>Status</th>
+      </tr>
+      </thead>
+
+      <tbody id="partnershipTableBody">
+
+      <tr>
+      <td colspan="7" style="text-align:center;padding:30px;">
+      Loading...
+      </td>
+      </tr>
+
+      </tbody>
+
+      </table>
+      </div>
+
+    </section>
     <div class="footer-seal">MUNITE Secretariat &middot; Confidential Operations Console &middot; 2026</div>
   </main>
 </div>
@@ -2495,6 +2537,7 @@ loadOverviewMetrics();
 loadAdminCodes();
 loadOverviewActivity();
 loadLoginHistory();
+loadPartnershipRequests();
 
 async function loadLoginHistory() {
   try {
@@ -3122,6 +3165,64 @@ document.addEventListener(
   });
 
 })();
+async function loadPartnershipRequests() {
+
+    try {
+
+        const snapshot = await getDocs(
+            collection(db, "partnership_requests")
+        );
+
+        const tbody = document.getElementById(
+            "partnershipTableBody"
+        );
+
+        let html = "";
+
+        snapshot.forEach(docSnap => {
+
+            const d = docSnap.data();
+
+            html += `
+            <tr>
+
+                <td class="cell-name">${d.institutionName || "-"}</td>
+
+                <td>${d.contactPerson || "-"}</td>
+
+                <td>${d.email || "-"}</td>
+
+                <td>${d.phone || "-"}</td>
+
+                <td>${d.city || "-"}</td>
+
+                <td>${d.organizationType || "-"}</td>
+
+                <td>
+                    <span class="status-tag pending">
+                        ${d.status || "New"}
+                    </span>
+                </td>
+
+            </tr>
+            `;
+        });
+
+        tbody.innerHTML =
+            html ||
+            `<tr>
+                <td colspan="7" style="text-align:center;padding:30px;">
+                    No partnership requests yet.
+                </td>
+            </tr>`;
+
+    } catch(err) {
+
+        console.error(err);
+
+    }
+
+}
 /* ============================================================
    BULK DELEGATE IMPORT — END
    ============================================================ */

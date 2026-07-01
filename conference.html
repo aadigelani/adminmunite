@@ -1,0 +1,2470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="MUNITE LOGO.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUNITE &middot; Conference Control</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MUNITE CONFERENCE CONTROL — DESIGN TOKENS
+   Identical palette to admin.html
+   ============================================================ */
+:root{
+  --black: #0c0710;
+  --purple-deep: #1f0a36;
+  --purple: #2d0f4d;
+  --purple-mid: #3c1666;
+  --purple-line: #4a1f7a;
+  --gold: #c8a042;
+  --gold-bright: #e3bf66;
+  --gold-dim: #8a6f33;
+  --ivory: #f3ecdd;
+  --ivory-dim: #cfc4ab;
+  --ivory-faint: #948871;
+  --red-status: #9c3b3b;
+  --green-status: #4b7a5e;
+
+  --font-display: 'Cormorant SC', serif;
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans: 'Jost', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius: 2px;
+  --sidebar-w: 268px;
+}
+
+*{ box-sizing: border-box; }
+html,body{
+  margin:0; padding:0;
+  background: var(--black);
+  color: var(--ivory);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; }
+}
+
+body{
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(200,160,66,0.05), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(74,31,122,0.18), transparent 45%),
+    repeating-linear-gradient(115deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+}
+
+a{ color: inherit; }
+button{ font-family: inherit; cursor: pointer; }
+::selection{ background: var(--gold-dim); color: var(--black); }
+
+::-webkit-scrollbar{ width: 10px; height: 10px; }
+::-webkit-scrollbar-track{ background: var(--purple-deep); }
+::-webkit-scrollbar-thumb{ background: var(--purple-line); border: 2px solid var(--purple-deep); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover{ background: var(--gold-dim); }
+
+:focus-visible{ outline: 1px solid var(--gold-bright); outline-offset: 2px; }
+
+/* ============================================================
+   LOCK SCREEN
+   ============================================================ */
+#lockScreen{
+  position: fixed; inset:0;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(74,31,122,0.35), transparent 60%),
+    var(--black);
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(200,160,66,0.05), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(74,31,122,0.18), transparent 45%),
+    repeating-linear-gradient(115deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+  display:flex; align-items:center; justify-content:center;
+  z-index: 9999;
+  animation: fade-in .6s ease;
+}
+#lockScreen.hide{
+  animation: lock-out .45s cubic-bezier(.6,0,.2,1) forwards;
+}
+@keyframes lock-out{
+  to{ opacity:0; transform: scale(1.04); pointer-events:none; }
+}
+
+.lock-box{
+  width: 380px; max-width: 92vw;
+  background: linear-gradient(180deg, var(--purple-deep) 0%, #160826 100%);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  padding: 48px 40px 44px;
+  text-align: center;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 60px rgba(200,160,66,0.06);
+  position:relative;
+  overflow:hidden;
+}
+.lock-box::before{
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+}
+.lock-crest{
+  width: 64px; height: 64px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 50%;
+  display:flex; align-items:center; justify-content:center;
+  margin: 0 auto 20px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--gold-bright);
+  background: radial-gradient(circle, rgba(200,160,66,0.1), transparent 70%);
+}
+.lock-title{
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 0.08em;
+  color: var(--ivory);
+  margin: 0 0 6px;
+}
+.lock-sub{
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 34px;
+}
+.lock-input{
+  width: 100%;
+  background: var(--black);
+  border: 1px solid var(--purple-line);
+  color: var(--ivory);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  letter-spacing: 0.22em;
+  text-align: center;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  transition: border-color .2s ease;
+}
+.lock-input:focus{ border-color: var(--gold-dim); outline:none; }
+.lock-input.error{ border-color: var(--red-status); animation: shake .35s ease; }
+@keyframes shake{
+  0%,100%{ transform:translateX(0); }
+  20%{ transform:translateX(-8px); }
+  40%{ transform:translateX(8px); }
+  60%{ transform:translateX(-5px); }
+  80%{ transform:translateX(5px); }
+}
+.lock-btn{
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold-dim));
+  color: var(--black);
+  border: 1px solid var(--gold-bright);
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  transition: all .2s ease;
+}
+.lock-btn:hover{ filter: brightness(1.08); box-shadow: 0 0 22px rgba(200,160,66,0.3); }
+.lock-error{
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #d18a8a;
+  text-transform: uppercase;
+  min-height: 18px;
+  opacity:0;
+  transition: opacity .2s ease;
+}
+.lock-error.show{ opacity:1; }
+
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+.app-shell{
+  display: flex;
+  min-height: 100vh;
+  opacity:0;
+  transition: opacity .5s ease .1s;
+}
+.app-shell.unlocked{ opacity:1; }
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar{
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background:
+    linear-gradient(180deg, var(--purple-deep) 0%, #160826 70%, #0e0518 100%);
+  border-right: 1px solid var(--purple-line);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top:0; bottom:0; left:0;
+  z-index: 50;
+  transition: transform .35s cubic-bezier(.6,0,.2,1);
+}
+
+.sidebar-brand{
+  padding: 30px 24px 22px;
+  border-bottom: 1px solid rgba(200,160,66,0.18);
+  text-align: center;
+}
+.munite-logo{
+  width: 72px; height: 72px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 14px;
+}
+.brand-name{
+  font-family: var(--font-display);
+  letter-spacing: 0.22em;
+  font-size: 20px;
+  color: var(--ivory);
+  margin: 0;
+}
+.brand-sub{
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.24em;
+  color: var(--gold-dim);
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+
+.session-pill{
+  margin: 16px 24px 0;
+  padding: 7px 10px;
+  border: 1px solid rgba(200,160,66,0.3);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--ivory-dim);
+}
+.session-pill .dot{
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green-status);
+  box-shadow: 0 0 6px var(--green-status);
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+@keyframes pulse-dot{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+.nav-section{
+  flex: 1;
+  padding: 22px 14px;
+  overflow-y: auto;
+}
+.nav-eyebrow{
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+  padding: 0 10px;
+  margin: 18px 0 8px;
+}
+.nav-eyebrow:first-child{ margin-top: 0; }
+
+.nav-item{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  margin-bottom: 2px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--ivory-dim);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  letter-spacing: 0.03em;
+  text-align: left;
+  position: relative;
+  transition: all .2s ease;
+}
+.nav-item .glyph{
+  width: 18px; text-align:center;
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--gold-dim);
+  transition: color .2s ease;
+}
+.nav-item:hover{
+  background: rgba(200,160,66,0.06);
+  color: var(--ivory);
+  border-color: rgba(200,160,66,0.15);
+}
+.nav-item:hover .glyph{ color: var(--gold-bright); }
+.nav-item.active{
+  background: linear-gradient(90deg, rgba(200,160,66,0.14), rgba(200,160,66,0.02));
+  color: var(--ivory);
+  border-left: 2px solid var(--gold-bright);
+  border-color: rgba(200,160,66,0.25);
+}
+.nav-item.active .glyph{ color: var(--gold-bright); }
+.nav-item.placeholder{ opacity:.45; cursor:default; }
+.nav-item.placeholder:hover{ background:transparent; border-color:transparent; color:var(--ivory-dim); }
+.nav-item.placeholder:hover .glyph{ color:var(--gold-dim); }
+
+.sidebar-footer{
+  padding: 16px 24px 22px;
+  border-top: 1px solid rgba(200,160,66,0.15);
+}
+.admin-chip{
+  display:flex; align-items:center; gap:10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ivory-dim);
+}
+.admin-chip .badge{
+  width: 28px; height: 28px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family: var(--font-display);
+  color: var(--gold-bright);
+  font-size: 13px;
+}
+.logout-link{
+  display:block;
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+  text-decoration: none;
+  border: 1px solid rgba(200,160,66,0.2);
+  text-align: center;
+  padding: 8px;
+  border-radius: var(--radius);
+  transition: all .2s ease;
+  cursor:pointer;
+}
+.logout-link:hover{ color: var(--gold-bright); border-color: var(--gold-dim); background: rgba(200,160,66,0.05); }
+
+/* mobile toggle */
+.mobile-bar{
+  display: none;
+  position: fixed;
+  top:0; left:0; right:0;
+  height: 58px;
+  background: var(--purple-deep);
+  border-bottom: 1px solid var(--purple-line);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 60;
+}
+.mobile-bar .brand-name{ font-size: 16px; margin:0; }
+.burger{
+  width: 38px; height: 38px;
+  border: 1px solid var(--gold-dim);
+  background: transparent;
+  border-radius: var(--radius);
+  color: var(--gold-bright);
+  font-size: 16px;
+}
+.sidebar-overlay{
+  display:none;
+  position: fixed; inset:0;
+  background: rgba(0,0,0,0.6);
+  z-index: 45;
+}
+
+/* ============================================================
+   MAIN WORKSPACE
+   ============================================================ */
+.workspace{
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-width: 0;
+  padding: 36px 44px 70px;
+}
+
+.topline{
+  display:flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 30px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--purple-line);
+}
+.topline .eyebrow{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin: 0 0 6px;
+}
+.topline h1{
+  font-family: var(--font-display);
+  font-size: 36px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ivory);
+}
+.topline .meta{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ivory-faint);
+  text-align: right;
+}
+.topline .meta strong{ color: var(--ivory-dim); }
+
+.section{ display:none; animation: fade-in .4s ease; }
+.section.active{ display:block; }
+@keyframes fade-in{ from{opacity:0; transform: translateY(6px);} to{opacity:1; transform:none;} }
+
+/* ============================================================
+   SHARED COMPONENTS
+   ============================================================ */
+.panel-title{
+  font-family: var(--font-display);
+  font-size: 19px;
+  letter-spacing: 0.05em;
+  color: var(--ivory);
+  margin: 0 0 4px;
+}
+.panel-sub{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ivory-faint);
+  text-transform: uppercase;
+}
+
+.btn{
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--gold-dim);
+  background: transparent;
+  color: var(--gold-bright);
+  transition: all .2s ease;
+  white-space: nowrap;
+}
+.btn:hover{ background: rgba(200,160,66,0.1); border-color: var(--gold-bright); }
+.btn-primary{
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold-dim));
+  color: var(--black);
+  border: 1px solid var(--gold-bright);
+  font-weight: 600;
+}
+.btn-primary:hover{ filter: brightness(1.08); box-shadow: 0 0 18px rgba(200,160,66,0.25); }
+.btn-ghost{ border-color: var(--purple-line); color: var(--ivory-dim); }
+.btn-ghost:hover{ border-color: var(--ivory-faint); color: var(--ivory); background: rgba(255,255,255,0.03); }
+.btn-danger{ border-color: rgba(156,59,59,0.5); color: #d18a8a; }
+.btn-danger:hover{ background: rgba(156,59,59,0.12); border-color: var(--red-status); }
+.btn-sm{ padding: 6px 11px; font-size: 11px; }
+
+.panel{
+  background: var(--purple-deep);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  padding: 22px 24px 24px;
+  margin-bottom: 18px;
+}
+.panel-head{
+  display:flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.input, .select{
+  background: var(--black);
+  border: 1px solid var(--purple-line);
+  color: var(--ivory);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+}
+.input::placeholder{ color: var(--ivory-faint); }
+.input:focus, .select:focus{ border-color: var(--gold-dim); outline:none; }
+
+.status-tag{
+  display:inline-flex; align-items:center; gap:5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.tag-verified{ color: #9fd6b3; border-color: rgba(75,122,94,0.5); background: rgba(75,122,94,0.08); }
+.tag-duplicate{ color: var(--gold-bright); border-color: rgba(200,160,66,0.4); background: rgba(200,160,66,0.06); }
+.tag-invalid{ color: #d18a8a; border-color: rgba(156,59,59,0.4); background: rgba(156,59,59,0.08); }
+
+/* ============================================================
+   CONFERENCE STATUS BAR
+   ============================================================ */
+.status-bar{
+  background: linear-gradient(165deg, var(--purple) 0%, var(--purple-deep) 100%);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  padding: 18px 24px;
+  margin-bottom: 24px;
+  display:flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  position:relative;
+  overflow:hidden;
+}
+.status-bar::before{
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  opacity:.5;
+}
+.sb-label{
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+  margin-bottom: 8px;
+}
+.sb-status-current{
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: var(--ivory);
+}
+.sb-status-current.s-notstarted{ color: var(--ivory-faint); }
+.sb-status-current.s-running{ color: #9fd6b3; }
+.sb-status-current.s-paused{ color: var(--gold-bright); }
+.sb-status-current.s-ended{ color: #d18a8a; }
+
+.status-buttons{
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+.status-btn{
+  padding: 9px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--purple-line);
+  background: transparent;
+  color: var(--ivory-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all .2s ease;
+}
+.status-btn:hover{ border-color: var(--gold-dim); color: var(--ivory); }
+.status-btn.active-status{ background: rgba(200,160,66,0.12); border-color: var(--gold-bright); color: var(--gold-bright); }
+.status-btn[data-status="Running"].active-status{ background: rgba(75,122,94,0.12); border-color: #4b7a5e; color: #9fd6b3; }
+.status-btn[data-status="Paused"].active-status{ background: rgba(200,160,66,0.1); border-color: var(--gold-dim); color: var(--gold-bright); }
+.status-btn[data-status="Ended"].active-status{ background: rgba(156,59,59,0.1); border-color: var(--red-status); color: #d18a8a; }
+
+/* ============================================================
+   OVERVIEW — METRIC GRID
+   ============================================================ */
+.metric-grid{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+.metric-card{
+  background: linear-gradient(165deg, var(--purple) 0%, var(--purple-deep) 100%);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  padding: 22px 22px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before{
+  content:'';
+  position:absolute; top:0; left:0; right:0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  opacity: .5;
+}
+.metric-card .m-label{
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+}
+.metric-card .m-value{
+  font-family: var(--font-display);
+  font-size: 42px;
+  color: var(--ivory);
+  margin: 10px 0 6px;
+  line-height: 1;
+}
+.metric-card .m-foot{
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--gold-bright);
+}
+.metric-card .m-foot.neutral{ color: var(--ivory-faint); }
+
+.overview-grid{
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 18px;
+}
+
+/* Live clock */
+#liveClock{
+  font-family: var(--font-display);
+  font-size: 42px;
+  color: var(--ivory);
+  margin: 10px 0 6px;
+  line-height: 1;
+}
+
+/* entry log timeline */
+.entry-log{ list-style:none; margin:0; padding:0; }
+.entry-log li{
+  display:flex; gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px dashed rgba(200,160,66,0.12);
+  align-items:flex-start;
+}
+.entry-log li:last-child{ border-bottom:none; }
+.el-dot{
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold-bright);
+  margin-top: 6px;
+  flex-shrink:0;
+  box-shadow: 0 0 8px rgba(200,160,66,0.5);
+}
+.el-body{ flex:1; min-width:0; }
+.el-name{ font-size: 13.5px; color: var(--ivory-dim); }
+.el-name strong{ color: var(--gold-bright); font-weight:600; }
+.el-meta{ font-family: var(--font-mono); font-size: 10px; color: var(--ivory-faint); margin-top:3px; }
+.el-tag{ flex-shrink:0; }
+
+/* last scan card */
+.last-scan-card{
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(200,160,66,0.1);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--ivory-dim);
+}
+.last-scan-card .ls-name{ font-family: var(--font-display); font-size: 18px; color: var(--ivory); margin-bottom:4px; }
+.last-scan-card .ls-meta{ font-family: var(--font-mono); font-size: 10px; color: var(--ivory-faint); }
+
+/* ============================================================
+   CONFERENCE ENTRY — SCANNER
+   ============================================================ */
+.entry-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.scanner-panel{
+  background: var(--purple-deep);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  padding: 22px 24px 24px;
+}
+
+#qr-reader{
+  width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+  min-height: 260px;
+}
+#qr-reader video{ border-radius: var(--radius); }
+
+.scanner-controls{
+  display:flex; gap:8px; margin-top: 14px; flex-wrap:wrap;
+}
+
+.scan-mode-tabs{
+  display:flex; gap:6px; margin-bottom: 14px;
+}
+.mode-tab{
+  padding: 6px 14px;
+  border: 1px solid var(--purple-line);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--ivory-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all .15s ease;
+}
+.mode-tab:hover{ border-color: var(--gold-dim); color: var(--gold-bright); }
+.mode-tab.active{
+  background: rgba(200,160,66,0.1);
+  border-color: var(--gold-bright);
+  color: var(--gold-bright);
+}
+
+/* Scanner state */
+.scanner-status{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ivory-faint);
+  text-transform: uppercase;
+  margin-top: 10px;
+  display:flex; align-items:center; gap:6px;
+}
+.scanner-status .ss-dot{
+  width:7px; height:7px; border-radius:50%;
+  background: var(--green-status);
+  box-shadow: 0 0 6px var(--green-status);
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+.scanner-status.idle .ss-dot{ background: var(--gold-dim); box-shadow: none; animation:none; }
+
+/* Manual search */
+.manual-search-wrap{
+  display:flex; gap:8px; margin-top:14px;
+}
+.manual-search-wrap .input{ flex:1; }
+
+/* ============================================================
+   VERIFICATION CARD
+   ============================================================ */
+.verify-card{
+  background: var(--purple-deep);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  position:relative;
+  overflow:hidden;
+  min-height: 340px;
+  display:flex; flex-direction:column;
+}
+.verify-card::before{
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  opacity:.4;
+}
+
+.vc-idle{
+  flex:1;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap: 14px;
+  color: var(--ivory-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.vc-idle-icon{ font-size: 48px; opacity:.3; }
+
+.vc-result{
+  display:none;
+  flex:1;
+  flex-direction:column;
+  animation: fade-in .3s ease;
+}
+.vc-result.show{ display:flex; }
+
+.vc-stamp{
+  display:flex; align-items:center; gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 18px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 0.08em;
+}
+.vc-stamp.verified{
+  background: rgba(75,122,94,0.12);
+  border: 1px solid rgba(75,122,94,0.4);
+  color: #9fd6b3;
+}
+.vc-stamp.duplicate{
+  background: rgba(200,160,66,0.08);
+  border: 1px solid rgba(200,160,66,0.35);
+  color: var(--gold-bright);
+}
+.vc-stamp.invalid{
+  background: rgba(156,59,59,0.1);
+  border: 1px solid rgba(156,59,59,0.4);
+  color: #d18a8a;
+}
+
+.vc-delegate-name{
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 0.04em;
+  color: var(--ivory);
+  margin-bottom: 4px;
+}
+.vc-field-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+.vc-field{
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(200,160,66,0.1);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+.vc-field .vf-label{
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+  margin-bottom: 4px;
+}
+.vc-field .vf-val{
+  font-size: 13px;
+  color: var(--ivory);
+}
+.vc-time{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ivory-faint);
+  margin-top: 12px;
+}
+
+.vc-countdown{
+  margin-top: auto;
+  padding-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--ivory-faint);
+  text-transform: uppercase;
+  text-align:center;
+}
+.vc-countdown .cd-bar{
+  height: 3px;
+  background: rgba(200,160,66,0.15);
+  border-radius:4px;
+  overflow:hidden;
+  margin-top: 6px;
+}
+.vc-countdown .cd-fill{
+  height:100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright));
+  border-radius:4px;
+  transition: width linear;
+}
+
+/* ============================================================
+   ENTRY LOG TABLE (full section)
+   ============================================================ */
+.table-wrap{
+  background: var(--purple-deep);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+table{ width: 100%; border-collapse: collapse; min-width: 560px; }
+thead th{
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--purple-line);
+}
+tbody tr{
+  border-bottom: 1px solid rgba(74,31,122,0.35);
+  transition: background .15s ease;
+}
+tbody tr:last-child{ border-bottom:none; }
+tbody tr:hover{ background: rgba(200,160,66,0.04); }
+td{ padding: 12px 16px; font-size: 13px; color: var(--ivory-dim); vertical-align:middle; }
+td.cell-name{ font-weight:500; color: var(--ivory); }
+td.cell-mono{ font-family: var(--font-mono); font-size: 11.5px; }
+
+/* toolbar */
+.toolbar{
+  display:flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  background: var(--purple-deep);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+}
+.toolbar-left{ display:flex; gap: 10px; flex-wrap: wrap; flex: 1; }
+.toolbar-right{ display:flex; gap: 10px; flex-wrap: wrap; }
+.search-wrap{ position: relative; min-width: 220px; flex: 1; max-width: 320px; }
+.search-wrap .input{ width: 100%; padding-left: 32px; }
+.search-wrap .ic{ position:absolute; left:10px; top:50%; transform: translateY(-50%); color: var(--ivory-faint); font-size: 13px; }
+
+/* ============================================================
+   PLACEHOLDER SECTIONS
+   ============================================================ */
+.placeholder-section{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height: 320px;
+  gap: 18px;
+  text-align:center;
+}
+.ph-icon{
+  font-size: 52px;
+  opacity:.25;
+}
+.ph-title{
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 0.06em;
+  color: var(--ivory-faint);
+}
+.ph-sub{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+  opacity:.6;
+}
+
+/* footer */
+.footer-seal{
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--purple-line);
+  text-align:center;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+}
+
+/* close-x button */
+.close-x{
+  background:transparent; border:none;
+  color: var(--ivory-faint); font-size: 20px;
+  padding: 4px 8px;
+  transition: color .15s ease;
+}
+.close-x:hover{ color: var(--ivory); }
+
+/* ============================================================
+   MANUAL ENTRY MODAL
+   ============================================================ */
+.modal-mask{
+  position:fixed; inset:0;
+  background: rgba(8,4,14,0.78);
+  backdrop-filter: blur(3px);
+  z-index:200;
+  display:none; align-items:center; justify-content:center;
+}
+.modal-mask.show{ display:flex; }
+.modal{
+  background: linear-gradient(180deg, var(--purple-deep), #160826);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  width: 480px; max-width: 94vw;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  animation: fade-in .25s ease;
+}
+.modal-head{
+  padding: 22px 26px 16px;
+  border-bottom: 1px solid rgba(200,160,66,0.18);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.modal-head h3{
+  font-family: var(--font-display);
+  font-size: 20px;
+  margin:0; color: var(--ivory);
+  letter-spacing: 0.04em;
+}
+.modal-body{ padding: 22px 26px; }
+.modal-foot{
+  padding: 14px 26px 22px;
+  display:flex; gap:10px; justify-content:flex-end;
+  border-top: 1px solid rgba(200,160,66,0.12);
+}
+.field{ margin-bottom: 16px; }
+.field label{
+  display:block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ivory-faint);
+  margin-bottom: 7px;
+}
+.field .input, .field .select{ width:100%; }
+.manual-results{
+  max-height: 240px;
+  overflow-y:auto;
+  margin-top: 10px;
+}
+.manual-result-item{
+  display:flex; justify-content:space-between; align-items:center;
+  padding: 10px 12px;
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+  background: rgba(0,0,0,0.15);
+  transition: background .15s ease;
+}
+.manual-result-item:hover{ background: rgba(200,160,66,0.05); }
+.mri-name{ font-size: 13.5px; color: var(--ivory); }
+.mri-meta{ font-family: var(--font-mono); font-size: 10px; color: var(--ivory-faint); margin-top:2px; }
+.mri-btn{ flex-shrink:0; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1100px){
+  .metric-grid{ grid-template-columns: repeat(2,1fr); }
+  .overview-grid{ grid-template-columns: 1fr; }
+  .entry-grid{ grid-template-columns: 1fr; }
+}
+@media (max-width: 860px){
+  .mobile-bar{ display:flex; }
+  .sidebar{ transform: translateX(-100%); top:0; }
+  .sidebar.open{ transform: translateX(0); }
+  .sidebar-overlay.show{ display:block; }
+  .workspace{ margin-left:0; padding: 80px 16px 60px; }
+  .metric-grid{ grid-template-columns: 1fr 1fr; }
+  .topline{ flex-direction: column; align-items: flex-start; }
+  .topline .meta{ text-align:left; }
+  .vc-field-grid{ grid-template-columns: 1fr; }
+}
+@media (max-width: 480px){
+  .metric-grid{ grid-template-columns: 1fr; }
+  .status-buttons{ flex-direction:column; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     LOCK SCREEN
+     ============================================================ -->
+<div id="lockScreen" style="display:none;">
+  <div class="lock-box">
+    <div class="lock-crest">&#9670;</div>
+    <h1 class="lock-title">Conference Control</h1>
+    <p class="lock-sub">MUNITE 2026 &middot; Restricted Access</p>
+    <input
+      class="lock-input"
+      type="password"
+      id="lockInput"
+      placeholder="CONFERENCE KEY"
+      autocomplete="off"
+      spellcheck="false"
+    >
+    <button class="lock-btn" id="lockBtn">Unlock</button>
+    <p class="lock-error" id="lockError">&#10005; Invalid key — access denied</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     MOBILE BAR
+     ============================================================ -->
+<div class="mobile-bar">
+  <p class="brand-name">MUNITE</p>
+  <button class="burger" id="burgerBtn" aria-label="Open menu">&#9776;</button>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ============================================================
+     APP SHELL
+     ============================================================ -->
+<div class="app-shell" id="appShell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="MUNITE LOGO.png" alt="MUNITE Logo" class="munite-logo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
+      <div id="logoFallback" style="display:none; width:56px;height:56px;margin:0 auto 14px;border:1px solid var(--gold-dim);border-radius:50%;align-items:center;justify-content:center;font-family:var(--font-display);font-size:22px;color:var(--gold-bright);">M</div>
+      <p class="brand-name">MUNITE</p>
+      <p class="brand-sub">Conference Control</p>
+    </div>
+
+    <div class="session-pill">
+      <span class="dot"></span>
+      <span id="sbConferenceStatus">CONFERENCE DAY</span>
+    </div>
+
+    <nav class="nav-section">
+      <p class="nav-eyebrow">Dashboard</p>
+      <button class="nav-item active" data-section="overview"><span class="glyph">&#9670;</span> Overview</button>
+      <button class="nav-item" data-section="entry"><span class="glyph">&#9650;</span> Conference Entry</button>
+
+      <p class="nav-eyebrow">Sessions</p>
+      <button class="nav-item" data-section="rollcall"><span class="glyph">&#9636;</span> Roll Call</button>
+      <button class="nav-item" data-section="voting"><span class="glyph">&#9753;</span> Live Voting</button>
+      <button class="nav-item placeholder" data-section="timeline" title="Coming Soon"><span class="glyph">&#8984;</span> Timeline</button>
+
+      <p class="nav-eyebrow">Analytics</p>
+      <button class="nav-item placeholder" data-section="statistics" title="Coming Soon"><span class="glyph">&#9636;</span> Statistics</button>
+      <button class="nav-item" data-section="settings"><span class="glyph">&#9881;</span> Settings</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="admin-chip">
+        <span class="badge">C</span>
+        <div>
+          <div style="color:var(--ivory-dim); font-size:11.5px;">Conference Desk</div>
+          <div style="color:var(--ivory-faint); font-size:9.5px;">Restricted Access</div>
+        </div>
+      </div>
+      <a class="logout-link" id="logoutBtn">Lock Console</a>
+    </div>
+  </aside>
+
+  <!-- WORKSPACE -->
+  <main class="workspace">
+
+    <!-- ============ OVERVIEW ============ -->
+    <section class="section active" id="sec-overview">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Conference Control &middot; Day Operations</p>
+          <h1>Overview</h1>
+        </div>
+        <div class="meta" id="overviewDate"><strong>MUNITE 2026</strong><br>Conference Day</div>
+      </div>
+
+      <!-- Conference Control -->
+      <div class="status-bar" id="conferenceControlCard" style="padding:26px 28px;">
+        <div>
+          <div class="sb-label">Conference Status</div>
+          <div class="sb-status-current s-notstarted" id="statusDisplay" style="font-size:30px;">NOT STARTED</div>
+        </div>
+        <div class="status-buttons">
+          <button class="btn btn-primary" id="startConferenceBtn" style="padding:14px 28px;font-size:14px;">&#9654; Start Conference</button>
+          <button class="btn btn-danger" id="endConferenceBtn" style="display:none;padding:14px 28px;font-size:14px;">&#9632; End Conference</button>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="m-label">Today's Entries</div>
+          <div class="m-value" id="metricEntries">0</div>
+          <div class="m-foot">Delegates checked in</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-label">Remaining</div>
+          <div class="m-value" id="metricRemaining">—</div>
+          <div class="m-foot neutral">Yet to arrive</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-label">Attendance %</div>
+          <div class="m-value" id="metricAttendancePct">—</div>
+          <div class="m-foot neutral" id="metricAttendanceFrac">0 / 0</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-label">Live Clock</div>
+          <div class="m-value" id="liveClock">—</div>
+          <div class="m-foot neutral">Conference time</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-label">Last Scan</div>
+          <div class="m-value" id="metricLastScanTime" style="font-size:22px;margin-top:14px;">—</div>
+          <div class="m-foot" id="metricLastScanName" style="color:var(--ivory-dim);">No scans yet</div>
+        </div>
+      </div>
+
+      <!-- Overview panels -->
+      <div class="overview-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-title">Recent Entry Log</p>
+              <p class="panel-sub">Live &middot; Newest first</p>
+            </div>
+          </div>
+          <ul class="entry-log" id="overviewEntryLog">
+            <li style="justify-content:center; color:var(--ivory-faint); font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; border-bottom:none; padding:30px 0;">NO ENTRIES YET</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-title">Last Verified</p>
+              <p class="panel-sub">Most recent scan</p>
+            </div>
+          </div>
+          <div class="last-scan-card" id="lastScanCard">
+            <div class="ls-name" style="color:var(--ivory-faint); font-size:14px;">Awaiting first scan</div>
+          </div>
+        </div>
+        <div class="panel" style="grid-column:1 / -1;">
+          <div class="panel-head">
+            <div>
+              <p class="panel-title">Committee Attendance</p>
+              <p class="panel-sub">Live &middot; Highest attendance first</p>
+            </div>
+          </div>
+          <div id="committeeAttendancePanel" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:14px 0;">
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.1em;">LOADING…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CONFERENCE ENTRY ============ -->
+    <section class="section" id="sec-entry">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Conference Control &middot; Attendance</p>
+          <h1>Conference Entry</h1>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" id="exportEntryBtn">&#8659; Export Excel</button>
+          <button class="btn btn-primary btn-sm" id="manualEntryBtn">&#9998; Manual Entry</button>
+        </div>
+      </div>
+
+      <div class="panel locked-card" id="entryLockedCard" style="display:none;">
+        <div class="placeholder-section">
+          <div class="ph-icon">&#128274;</div>
+          <div class="ph-title">Module Locked</div>
+          <div class="ph-sub">This module is unavailable until the conference has been started.</div>
+          <button class="btn btn-primary locked-back-btn" style="margin-top:14px;">&#9670; Go to Overview</button>
+        </div>
+      </div>
+
+      <div id="entryUnlockedContent">
+      <div class="entry-grid">
+        <!-- Scanner Panel -->
+        <div class="scanner-panel">
+          <div class="panel-head" style="margin-bottom:12px;">
+            <div>
+              <p class="panel-title">QR Scanner</p>
+              <p class="panel-sub">Point camera at delegate QR code</p>
+            </div>
+          </div>
+
+          <div class="scan-mode-tabs">
+            <button class="mode-tab active" data-mode="continuous">Continuous</button>
+            <button class="mode-tab" data-mode="single">Single Scan</button>
+          </div>
+
+          <div id="qr-reader"></div>
+
+          <div class="scanner-controls">
+            <button class="btn btn-primary btn-sm" id="startScanBtn">&#9654; Start Scanner</button>
+            <button class="btn btn-ghost btn-sm" id="stopScanBtn" style="display:none;">&#9632; Stop</button>
+            <button class="btn btn-ghost btn-sm" id="switchCameraBtn" style="display:none;">&#8635; Switch Camera</button>
+            <button class="btn btn-ghost btn-sm" id="torchBtn" style="display:none;">&#9888; Torch</button>
+          </div>
+
+          <div class="scanner-status idle" id="scannerStatus">
+            <span class="ss-dot"></span>
+            <span id="scannerStatusText">Scanner not started</span>
+          </div>
+
+          <!-- Manual barcode input -->
+          <div style="margin-top:18px;">
+            <p class="panel-sub" style="margin-bottom:8px;">Manual ID Entry</p>
+            <div style="display:flex;gap:8px;">
+              <input class="input" style="flex:1;" type="text" id="manualIdInput" placeholder="Paste or type delegate ID">
+              <button class="btn btn-ghost btn-sm" id="manualIdVerifyBtn">Verify</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification Card -->
+        <div class="verify-card" id="verifyCard">
+          <div class="vc-idle" id="vcIdle">
+            <div class="vc-idle-icon">&#9641;</div>
+            <div>Awaiting Scan</div>
+            <div style="font-size:9px;opacity:.6;">Scanner will auto-verify</div>
+          </div>
+
+          <div class="vc-result" id="vcResult">
+            <div class="vc-stamp" id="vcStamp">
+              <span id="vcStampIcon"></span>
+              <span id="vcStampText"></span>
+            </div>
+            <div class="vc-delegate-name" id="vcDelegateName"></div>
+            <div class="vc-field-grid">
+              <div class="vc-field">
+                <div class="vf-label">Committee</div>
+                <div class="vf-val" id="vcCommittee">—</div>
+              </div>
+              <div class="vc-field">
+                <div class="vf-label">Portfolio</div>
+                <div class="vf-val" id="vcPortfolio">—</div>
+              </div>
+              <div class="vc-field">
+                <div class="vf-label">Institution</div>
+                <div class="vf-val" id="vcInstitution">—</div>
+              </div>
+              <div class="vc-field">
+                <div class="vf-label">Phone</div>
+                <div class="vf-val" id="vcPhone">—</div>
+              </div>
+            </div>
+            <div class="vc-time" id="vcTime"></div>
+            <div class="vc-countdown" id="vcCountdown" style="display:none;">
+              Resetting scanner…
+              <div class="cd-bar"><div class="cd-fill" id="cdFill" style="width:100%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full Entry Log -->
+      <div class="panel" style="margin-top:18px;">
+        <div class="panel-head">
+          <div>
+            <p class="panel-title">Today's Entry Log</p>
+            <p class="panel-sub">All conference entries &middot; Newest first</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="refreshLogBtn">&#8634; Refresh</button>
+        </div>
+        <div style="display:flex;gap:10px;padding:0 0 14px;flex-wrap:wrap;">
+          <input class="input" type="text" id="entryLogSearch" placeholder="Search name, phone, portfolio, committee…" style="flex:1;min-width:200px;">
+          <select class="input" id="entryLogCommitteeFilter" style="max-width:200px;">
+            <option value="">All Committees</option>
+          </select>
+        </div>
+        <div class="table-wrap" style="border:none;">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Delegate</th>
+                <th>Committee</th>
+                <th>Portfolio</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="entryLogTableBody">
+              <tr><td colspan="5" style="text-align:center;padding:30px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;color:var(--ivory-faint);">NO ENTRIES YET</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- ============ ROLL CALL (Placeholder) ============ -->
+    <section class="section" id="sec-rollcall">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Conference Control &middot; Sessions</p>
+          <h1>Roll Call</h1>
+        </div>
+      </div>
+      <div class="panel locked-card" id="rollcallLockedCard" style="display:none;">
+        <div class="placeholder-section">
+          <div class="ph-icon">&#128274;</div>
+          <div class="ph-title">Module Locked</div>
+          <div class="ph-sub">This module is unavailable until the conference has been started.</div>
+          <button class="btn btn-primary locked-back-btn" style="margin-top:14px;">&#9670; Go to Overview</button>
+        </div>
+      </div>
+      <div id="rollcallUnlockedContent">
+      <div class="panel">
+        <div class="placeholder-section">
+          <div class="ph-icon">&#9636;</div>
+          <div class="ph-title">Roll Call</div>
+          <div class="ph-sub">Coming in next version &middot; Ready for implementation</div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- ============ LIVE VOTING (Placeholder) ============ -->
+    <section class="section" id="sec-voting">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Conference Control &middot; Sessions</p>
+          <h1>Live Voting</h1>
+        </div>
+      </div>
+      <div class="panel locked-card" id="votingLockedCard" style="display:none;">
+        <div class="placeholder-section">
+          <div class="ph-icon">&#128274;</div>
+          <div class="ph-title">Module Locked</div>
+          <div class="ph-sub">This module is unavailable until the conference has been started.</div>
+          <button class="btn btn-primary locked-back-btn" style="margin-top:14px;">&#9670; Go to Overview</button>
+        </div>
+      </div>
+      <div id="votingUnlockedContent">
+      <div class="panel">
+        <div class="placeholder-section">
+          <div class="ph-icon">&#9753;</div>
+          <div class="ph-title">Live Voting</div>
+          <div class="ph-sub">Coming in next version &middot; Ready for implementation</div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- ============ TIMELINE (Placeholder) ============ -->
+    <section class="section" id="sec-timeline">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Conference Control &middot; Sessions</p>
+          <h1>Timeline</h1>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="placeholder-section">
+          <div class="ph-icon">&#8984;</div>
+          <div class="ph-title">Timeline</div>
+          <div class="ph-sub">Coming in next version &middot; Ready for implementation</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STATISTICS (Placeholder) ============ -->
+    <section class="section" id="sec-statistics">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Conference Control &middot; Analytics</p>
+          <h1>Statistics</h1>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="placeholder-section">
+          <div class="ph-icon">&#9636;</div>
+          <div class="ph-title">Statistics</div>
+          <div class="ph-sub">Coming in next version &middot; Ready for implementation</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section class="section" id="sec-settings">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Conference Control &middot; Configuration</p>
+          <h1>Settings</h1>
+        </div>
+      </div>
+      <div class="panel">
+        <p class="panel-title">Conference Status</p>
+        <p class="panel-sub" style="margin-bottom:18px;">Manually set or reset the global conference status in Firestore</p>
+        <div class="status-buttons">
+          <button class="status-btn" data-status="Not Started">Not Started</button>
+          <button class="status-btn" data-status="Running">&#9654; Running</button>
+          <button class="status-btn" data-status="Paused">&#9646;&#9646; Paused</button>
+          <button class="status-btn" data-status="Ended">&#9632; Ended</button>
+        </div>
+        <p style="margin-top:18px;font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.08em;">Current: <span id="settingsStatusDisplay">—</span></p>
+      </div>
+      <div class="panel">
+        <p class="panel-title">About This Console</p>
+        <p class="panel-sub" style="margin-bottom:14px;">Build info</p>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--ivory-faint);letter-spacing:0.06em;line-height:2;">
+          Version: MUNITE Conference Control V3.1<br>
+          Firebase Project: munite-acf5d<br>
+          Collection: conferenceAttendance<br>
+          Status Collection: conferenceStatus/current
+        </div>
+      </div>
+    </section>
+
+    <div class="footer-seal">MUNITE Conference Control &middot; Restricted Operations Console &middot; 2026</div>
+  </main>
+</div>
+
+<!-- ============================================================
+     MANUAL ENTRY MODAL
+     ============================================================ -->
+<div class="modal-mask" id="manualModalMask">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Manual Delegate Search</h3>
+      <button class="close-x" id="manualModalClose">&#215;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Search by Name, Phone, or Portfolio</label>
+        <input class="input" type="text" id="manualSearchInput" placeholder="Start typing…" autocomplete="off">
+      </div>
+      <div class="manual-results" id="manualResults">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.08em;text-align:center;padding:20px;">Type to search delegates</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="manualModalCancel">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     CONFERENCE PASSWORD MODAL
+     ============================================================ -->
+<div class="modal-mask" id="confPasswordModalMask">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="confPasswordModalTitle">Start Conference</h3>
+      <button class="close-x" id="confPasswordModalClose">&#215;</button>
+    </div>
+    <div class="modal-body">
+      <p class="panel-sub" style="margin-bottom:10px;">Enter the conference password to continue</p>
+      <input class="input" style="width:100%;" type="password" id="confPasswordInput" placeholder="CONFERENCE PASSWORD" autocomplete="off" spellcheck="false">
+      <p class="lock-error" id="confPasswordError" style="text-align:left;margin-top:10px;">&#10005; Incorrect password — access denied</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="confPasswordCancel">Cancel</button>
+      <button class="btn btn-primary" id="confPasswordConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     FIREBASE + APP LOGIC
+     ============================================================ -->
+<script type="module">
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  limit
+} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+/* ---- Firebase Init ---- */
+const firebaseConfig = {
+  apiKey: "AIzaSyCeEFqHujlHHAkr8Bq7uOG8CTXYY1Vfd60",
+  authDomain: "munite-acf5d.firebaseapp.com",
+  projectId: "munite-acf5d",
+  storageBucket: "munite-acf5d.firebasestorage.app",
+  messagingSenderId: "785242774756",
+  appId: "1:785242774756:web:2aea5a47dd93d9fbd260f1"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ============================================================
+   LOCK SCREEN
+   ============================================================ */
+const CONFERENCE_KEY = "GADKARI";
+
+const lockScreen   = document.getElementById("lockScreen");
+const appShell     = document.getElementById("appShell");
+
+// The dashboard opens immediately. No password is required to enter the app.
+lockScreen.style.display = "none";
+appShell.classList.add("unlocked");
+onAppUnlock();
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  location.reload();
+});
+
+/* ============================================================
+   SIDEBAR NAV
+   ============================================================ */
+function initNav() {
+  document.querySelectorAll(".nav-item").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (btn.classList.contains("placeholder")) return;
+      document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      btn.classList.add("active");
+      const sec = document.getElementById("sec-" + btn.dataset.section);
+      if (sec) sec.classList.add("active");
+      // close mobile
+      sidebar.classList.remove("open");
+      sidebarOverlay.classList.remove("show");
+    });
+  });
+}
+
+// Mobile sidebar
+const sidebar        = document.getElementById("sidebar");
+const sidebarOverlay = document.getElementById("sidebarOverlay");
+const burgerBtn      = document.getElementById("burgerBtn");
+burgerBtn.addEventListener("click", () => {
+  sidebar.classList.toggle("open");
+  sidebarOverlay.classList.toggle("show");
+});
+sidebarOverlay.addEventListener("click", () => {
+  sidebar.classList.remove("open");
+  sidebarOverlay.classList.remove("show");
+});
+
+/* ============================================================
+   LIVE CLOCK
+   ============================================================ */
+function startClock() {
+  function tick() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,"0");
+    const mm = String(now.getMinutes()).padStart(2,"0");
+    const ss = String(now.getSeconds()).padStart(2,"0");
+    document.getElementById("liveClock").textContent = `${hh}:${mm}:${ss}`;
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // Also update date in topline
+  const d = new Date();
+  const opts = { weekday:"long", year:"numeric", month:"long", day:"numeric" };
+  document.getElementById("overviewDate").innerHTML =
+    `<strong>MUNITE 2026</strong><br>${d.toLocaleDateString(undefined, opts)}`;
+}
+
+/* ============================================================
+   CONFERENCE STATUS
+   ============================================================ */
+const statusMap = {
+  "Not Started": "s-notstarted",
+  "Running":     "s-running",
+  "Paused":      "s-paused",
+  "Ended":       "s-ended"
+};
+
+let currentConferenceStatus = "Not Started";
+
+function applyStatusUI(status) {
+  currentConferenceStatus = status;
+  // Main display
+  const el = document.getElementById("statusDisplay");
+  el.textContent = status;
+  el.className = "sb-status-current " + (statusMap[status] || "s-notstarted");
+  // Sidebar pill
+  document.getElementById("sbConferenceStatus").textContent = status.toUpperCase();
+  // Settings display
+  const sd = document.getElementById("settingsStatusDisplay");
+  if (sd) sd.textContent = status;
+  // Active button
+  document.querySelectorAll(".status-btn").forEach(b => {
+    b.classList.toggle("active-status", b.dataset.status === status);
+  });
+}
+
+async function setConferenceStatus(status) {
+  try {
+    await setDoc(doc(db, "conference", "current"), {
+      status,
+      updatedAt: serverTimestamp(),
+      updatedBy: "conference-control"
+    }, { merge: true });
+  } catch(e) { console.error("Status write failed:", e); }
+}
+
+document.querySelectorAll(".status-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    setConferenceStatus(btn.dataset.status);
+  });
+});
+
+/* ============================================================
+   CONFERENCE RUNNING GATE — conference/current.running
+   ============================================================ */
+const startConferenceBtn     = document.getElementById("startConferenceBtn");
+const endConferenceBtn       = document.getElementById("endConferenceBtn");
+const confPasswordModalMask  = document.getElementById("confPasswordModalMask");
+const confPasswordModalTitle = document.getElementById("confPasswordModalTitle");
+const confPasswordInput      = document.getElementById("confPasswordInput");
+const confPasswordError      = document.getElementById("confPasswordError");
+const confPasswordConfirm    = document.getElementById("confPasswordConfirm");
+const confPasswordCancel     = document.getElementById("confPasswordCancel");
+const confPasswordModalClose = document.getElementById("confPasswordModalClose");
+
+let conferenceRunning = false;
+let pendingConferenceAction = null; // "start" | "end"
+
+function openConfPasswordModal(action) {
+  pendingConferenceAction = action;
+  confPasswordModalTitle.textContent = action === "start" ? "Start Conference" : "End Conference";
+  confPasswordInput.value = "";
+  confPasswordInput.style.borderColor = "";
+  confPasswordError.classList.remove("show");
+  confPasswordModalMask.classList.add("show");
+  setTimeout(() => confPasswordInput.focus(), 50);
+}
+function closeConfPasswordModal() {
+  confPasswordModalMask.classList.remove("show");
+  confPasswordInput.value = "";
+  confPasswordInput.style.borderColor = "";
+  confPasswordError.classList.remove("show");
+  pendingConferenceAction = null;
+}
+
+startConferenceBtn.addEventListener("click", () => openConfPasswordModal("start"));
+endConferenceBtn.addEventListener("click", () => openConfPasswordModal("end"));
+confPasswordCancel.addEventListener("click", closeConfPasswordModal);
+confPasswordModalClose.addEventListener("click", closeConfPasswordModal);
+confPasswordModalMask.addEventListener("click", e => { if (e.target === confPasswordModalMask) closeConfPasswordModal(); });
+confPasswordInput.addEventListener("keydown", e => { if (e.key === "Enter") confPasswordConfirm.click(); });
+
+confPasswordConfirm.addEventListener("click", async () => {
+  const val = confPasswordInput.value.trim().toUpperCase();
+  if (val !== CONFERENCE_KEY) {
+    confPasswordInput.style.borderColor = "var(--red-status)";
+    confPasswordError.classList.add("show");
+    confPasswordInput.value = "";
+    confPasswordInput.focus();
+    return;
+  }
+  try {
+      if (pendingConferenceAction === "start") {
+    await setDoc(doc(db, "conference", "current"), {
+      running: true,
+      status: "Running",
+      startedAt: serverTimestamp(),
+      startedBy: "conference-desk",
+      updatedAt: serverTimestamp(),
+      updatedBy: "conference-control"
+    }, { merge: true });
+  } else if (pendingConferenceAction === "end") {
+    await setDoc(doc(db, "conference", "current"), {
+      running: false,
+      status: "Ended",
+      endedAt: serverTimestamp(),
+      endedBy: "conference-desk",
+      updatedAt: serverTimestamp(),
+      updatedBy: "conference-control"
+    }, { merge: true });
+  }
+    closeConfPasswordModal();
+  } catch(e) {
+    console.error("Conference state write failed:", e);
+    confPasswordError.textContent = "\u2715 Could not update conference state — try again";
+    confPasswordError.classList.add("show");
+  }
+});
+
+function setModuleDisabled(disabled) {
+  const manualEntryBtn    = document.getElementById("manualEntryBtn");
+  const manualIdInput     = document.getElementById("manualIdInput");
+  const manualIdVerifyBtn = document.getElementById("manualIdVerifyBtn");
+  const startScanBtnEl    = document.getElementById("startScanBtn");
+  if (manualEntryBtn)    manualEntryBtn.disabled    = disabled;
+  if (manualIdInput)     manualIdInput.disabled     = disabled;
+  if (manualIdVerifyBtn) manualIdVerifyBtn.disabled = disabled;
+  if (startScanBtnEl)    startScanBtnEl.disabled    = disabled;
+}
+
+function applyRunningUI(running) {
+  conferenceRunning = running;
+
+  const statusEl = document.getElementById("statusDisplay");
+  statusEl.textContent = running ? "RUNNING" : "NOT STARTED";
+  statusEl.className = "sb-status-current " + (running ? "s-running" : "s-notstarted");
+
+  startConferenceBtn.style.display = running ? "none" : "";
+  endConferenceBtn.style.display   = running ? "" : "none";
+
+  document.getElementById("entryLockedCard").style.display        = running ? "none" : "";
+  document.getElementById("entryUnlockedContent").style.display   = running ? "" : "none";
+  document.getElementById("rollcallLockedCard").style.display     = running ? "none" : "";
+  document.getElementById("rollcallUnlockedContent").style.display = running ? "" : "none";
+  document.getElementById("votingLockedCard").style.display       = running ? "none" : "";
+  document.getElementById("votingUnlockedContent").style.display  = running ? "" : "none";
+
+  if (!running) {
+    stopScanner();
+    setModuleDisabled(true);
+  } else {
+    setModuleDisabled(false);
+  }
+}
+
+function listenConferenceState() {
+  onSnapshot(doc(db, "conference", "current"), snap => {
+    const data = snap.exists() ? snap.data() : {};
+    const running = !!data.running;
+    applyRunningUI(running);
+    applyStatusUI(data.status || (running ? "Running" : "Not Started"));
+  });
+}
+
+document.querySelectorAll(".locked-back-btn").forEach(btn => {
+  btn.addEventListener("click", goToOverview);
+});
+
+function goToOverview() {
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  const overviewBtn = document.querySelector('.nav-item[data-section="overview"]');
+  if (overviewBtn) overviewBtn.classList.add("active");
+  document.getElementById("sec-overview").classList.add("active");
+  sidebar.classList.remove("open");
+  sidebarOverlay.classList.remove("show");
+}
+
+/* ============================================================
+   ENTRY ATTENDANCE — FIRESTORE
+   ============================================================ */
+function todayDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+let totalDelegates = 0;
+let delegatesByCommittee = {};
+let latestEntryDocs = [];
+
+function listenDelegates() {
+  onSnapshot(collection(db, "delegates"), snap => {
+    totalDelegates = snap.size;
+    const byCommittee = {};
+    snap.forEach(d => {
+      const data = d.data();
+      const c = data.committee || data.committeePreference || "Unassigned";
+      byCommittee[c] = (byCommittee[c] || 0) + 1;
+    });
+    delegatesByCommittee = byCommittee;
+    populateCommitteeFilter();
+    updateAttendanceMetrics();
+    renderCommitteeAttendance();
+  });
+}
+
+function populateCommitteeFilter() {
+  const sel = document.getElementById("entryLogCommitteeFilter");
+  if (!sel) return;
+  const current = sel.value;
+  const committees = Object.keys(delegatesByCommittee).sort();
+  sel.innerHTML = `<option value="">All Committees</option>` +
+    committees.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join("");
+  sel.value = current;
+}
+
+function updateAttendanceMetrics() {
+  const entries = parseInt(document.getElementById("metricEntries").textContent) || 0;
+  const rem = totalDelegates > 0 ? Math.max(0, totalDelegates - entries) : "—";
+  document.getElementById("metricRemaining").textContent = rem;
+
+  const pctEl = document.getElementById("metricAttendancePct");
+  const fracEl = document.getElementById("metricAttendanceFrac");
+  if (!pctEl || !fracEl) return;
+  if (totalDelegates > 0) {
+    const pct = Math.round((entries / totalDelegates) * 100);
+    pctEl.textContent = pct + "%";
+    fracEl.textContent = `${entries} / ${totalDelegates}`;
+  } else {
+    pctEl.textContent = "—";
+    fracEl.textContent = "0 / 0";
+  }
+}
+
+function renderCommitteeAttendance() {
+  const el = document.getElementById("committeeAttendancePanel");
+  if (!el) return;
+  const committees = Object.keys(delegatesByCommittee);
+  if (committees.length === 0) {
+    el.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.1em;">NO COMMITTEES YET</div>`;
+    return;
+  }
+  const enteredByCommittee = {};
+  latestEntryDocs.forEach(d => {
+    const c = d.committee || "Unassigned";
+    enteredByCommittee[c] = (enteredByCommittee[c] || 0) + 1;
+  });
+  const rows = committees.map(c => {
+    const total = delegatesByCommittee[c] || 0;
+    const entered = enteredByCommittee[c] || 0;
+    const pct = total > 0 ? Math.round((entered / total) * 100) : 0;
+    return { c, total, entered, pct };
+  }).sort((a, b) => b.pct - a.pct);
+
+  el.innerHTML = rows.map(r => `
+    <div style="border:1px solid var(--purple-line);border-radius:var(--radius);padding:10px 12px;">
+      <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;color:var(--gold-dim);text-transform:uppercase;">${escHtml(r.c)}</div>
+      <div style="font-family:var(--font-display);font-size:18px;color:var(--ivory);margin-top:4px;">${r.entered} / ${r.total}</div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-dim);margin-top:2px;">${r.pct}%</div>
+    </div>
+  `).join("");
+}
+
+function getFilteredEntryDocs() {
+  const searchEl = document.getElementById("entryLogSearch");
+  const filterEl = document.getElementById("entryLogCommitteeFilter");
+  const q = searchEl ? searchEl.value.trim().toLowerCase() : "";
+  const committee = filterEl ? filterEl.value : "";
+  return latestEntryDocs.filter(d => {
+    if (committee && d.committee !== committee) return false;
+    if (!q) return true;
+    return (d.delegateName || "").toLowerCase().includes(q)
+        || (d.phone || "").toLowerCase().includes(q)
+        || (d.portfolio || "").toLowerCase().includes(q)
+        || (d.committee || "").toLowerCase().includes(q);
+  });
+}
+document.getElementById("entryLogSearch").addEventListener("input", () => {
+  renderEntryTable(getFilteredEntryDocs());
+});
+document.getElementById("entryLogCommitteeFilter").addEventListener("change", () => {
+  renderEntryTable(getFilteredEntryDocs());
+});
+/* Realtime listener for today's entries */
+function listenEntries() {
+  const today = todayDateString();
+  const q = query(
+    collection(db, "conferenceAttendance"),
+    where("date", "==", today),
+    orderBy("timestamp", "desc")
+  );
+
+  onSnapshot(q, snap => {
+    const docs = [];
+    snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+    latestEntryDocs = docs;
+
+    // Metric
+    document.getElementById("metricEntries").textContent = docs.length;
+    updateAttendanceMetrics();
+    renderCommitteeAttendance();
+
+    // Last scan
+    if (docs.length > 0) {
+      const last = docs[0];
+      const ts = last.timestamp ? last.timestamp.toDate() : new Date();
+      const tStr = ts.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+      document.getElementById("metricLastScanTime").textContent = tStr;
+      document.getElementById("metricLastScanName").textContent = last.delegateName || "—";
+      document.getElementById("lastScanCard").innerHTML = `
+        <div class="ls-name">${escHtml(last.delegateName || "—")}</div>
+        <div class="ls-meta">${escHtml(last.committee || "—")} &middot; ${escHtml(last.portfolio || "—")}</div>
+        <div class="ls-meta" style="margin-top:4px;">Entered at ${tStr}</div>
+      `;
+    }
+
+    // Overview log (top 8)
+    renderOverviewLog(docs.slice(0, 8));
+    // Full table (search/filter applied client-side, no extra query)
+    renderEntryTable(getFilteredEntryDocs());
+  });
+}
+
+function renderOverviewLog(docs) {
+  const ul = document.getElementById("overviewEntryLog");
+  if (docs.length === 0) {
+    ul.innerHTML = `<li style="justify-content:center;color:var(--ivory-faint);font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;border-bottom:none;padding:30px 0;">NO ENTRIES YET</li>`;
+    return;
+  }
+  ul.innerHTML = docs.map(d => {
+    const ts = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}) : "—";
+    return `<li>
+      <span class="el-dot"></span>
+      <div class="el-body">
+        <div class="el-name"><strong>${escHtml(d.delegateName||"—")}</strong></div>
+        <div class="el-meta">${escHtml(d.committee||"—")} &middot; ${ts}</div>
+      </div>
+      <div class="el-tag"><span class="status-tag tag-verified">&#10003; Entered</span></div>
+    </li>`;
+  }).join("");
+}
+
+function renderEntryTable(docs) {
+  const tbody = document.getElementById("entryLogTableBody");
+  if (docs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;color:var(--ivory-faint);">NO ENTRIES YET</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = docs.map(d => {
+    const ts = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"}) : "—";
+    return `<tr>
+      <td class="cell-mono">${ts}</td>
+      <td class="cell-name">${escHtml(d.delegateName||"—")}</td>
+      <td>${escHtml(d.committee||"—")}</td>
+      <td>${escHtml(d.portfolio||"—")}</td>
+      <td><span class="status-tag tag-verified">&#10003; Entered</span></td>
+    </tr>`;
+  }).join("");
+}
+
+/* ---- Record entry ---- */
+async function recordEntry(delegateId, delegateData) {
+  const today = todayDateString();
+  // Check duplicate
+  const dupQuery = query(
+    collection(db, "conferenceAttendance"),
+    where("delegateId", "==", delegateId),
+    where("date", "==", today)
+  );
+  const dupSnap = await getDocs(dupQuery);
+  if (!dupSnap.empty) {
+    const prev = dupSnap.docs[0].data();
+    return { status: "duplicate", prev };
+  }
+  // Write
+  await addDoc(collection(db, "conferenceAttendance"), {
+    delegateId,
+    delegateName: delegateData.name || "",
+    committee:    delegateData.committee || delegateData.committeePreference || "",
+    portfolio:    delegateData.portfolio || "",
+    institution:  delegateData.institution || "",
+    phone:        delegateData.phone || "",
+    timestamp:    serverTimestamp(),
+    date:         today,
+    conferenceStatus: currentConferenceStatus,
+    verifiedBy:   "conference-control"
+  });
+
+  // Sync delegate doc so the Delegate Dashboard updates live (does NOT lock/expire the QR)
+  try {
+    await setDoc(doc(db, "delegates", delegateId), {
+      checkedIn: true,
+      entryTimestamp: serverTimestamp(),
+      attendanceDate: today,
+      conferenceStatus: currentConferenceStatus
+    }, { merge: true });
+  } catch(e) {
+    console.error("Delegate sync failed:", e);
+  }
+
+  return { status: "verified" };
+}
+
+/* ---- Fetch delegate by ID ---- */
+async function fetchDelegate(id) {
+  // Try direct doc by id
+  const directRef = doc(db, "delegates", id);
+  const directSnap = await getDoc(directRef);
+  if (directSnap.exists()) return { id: directSnap.id, ...directSnap.data() };
+  // Try by phone field
+  const phoneQ = query(collection(db, "delegates"), where("phone", "==", id));
+  const phoneSnap = await getDocs(phoneQ);
+  if (!phoneSnap.empty) return { id: phoneSnap.docs[0].id, ...phoneSnap.docs[0].data() };
+  return null;
+}
+
+/* ---- Verify & show result ---- */
+let resetTimer = null;
+
+async function verifyAndShow(rawId) {
+  if (!rawId || rawId.trim() === "") return;
+  const id = rawId.trim();
+
+  showVerifyResult(null, "loading");
+  updateScannerStatus("Verifying…", false);
+
+  try {
+    const delegate = await fetchDelegate(id);
+    if (!delegate) {
+      showVerifyResult(null, "invalid");
+      scheduleReset();
+      return;
+    }
+    const result = await recordEntry(delegate.id, delegate);
+    if (result.status === "duplicate") {
+      const prevTs = result.prev.timestamp ? result.prev.timestamp.toDate().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}) : "—";
+      showVerifyResult(delegate, "duplicate", prevTs);
+
+    } else {
+      showVerifyResult(delegate, "verified");
+      updateLastScanInstant(delegate);
+    }
+  } catch(e) {
+    console.error("Verify error:", e);
+    showVerifyResult(null, "invalid", "Firestore error");
+  }
+
+  if (scanMode === "single") {
+    scheduleReset();
+  } else {
+    scheduleReset();
+  }
+  updateScannerStatus("Ready — waiting for scan", true);
+}
+
+function showVerifyResult(delegate, status, extra) {
+  const idle = document.getElementById("vcIdle");
+  const result = document.getElementById("vcResult");
+  const stamp = document.getElementById("vcStamp");
+  const stampIcon = document.getElementById("vcStampIcon");
+  const stampText = document.getElementById("vcStampText");
+
+  idle.style.display = "none";
+  result.classList.add("show");
+
+  if (status === "loading") {
+    stamp.className = "vc-stamp";
+    stampIcon.textContent = "⏳";
+    stampText.textContent = "Verifying…";
+    document.getElementById("vcDelegateName").textContent = "";
+    return;
+  }
+
+  if (status === "verified") {
+    stamp.className = "vc-stamp verified";
+    stampIcon.textContent = "✓";
+    stampText.textContent = "VERIFIED — Attendance Recorded";
+  } else if (status === "duplicate") {
+    stamp.className = "vc-stamp duplicate";
+    stampIcon.textContent = "⚠";
+    stampText.textContent = `Already Entered Today${extra ? " · " + extra : ""}`;
+  } else {
+    stamp.className = "vc-stamp invalid";
+    stampIcon.textContent = "✗";
+    stampText.textContent = extra || "QR Not Recognised";
+  }
+
+  document.getElementById("vcDelegateName").textContent = delegate ? (delegate.name || "Unknown") : "—";
+  document.getElementById("vcCommittee").textContent  = delegate ? (delegate.committee || delegate.committeePreference || "—") : "—";
+  document.getElementById("vcPortfolio").textContent  = delegate ? (delegate.portfolio || "—") : "—";
+  document.getElementById("vcInstitution").textContent= delegate ? (delegate.institution || "—") : "—";
+  document.getElementById("vcPhone").textContent      = delegate ? (delegate.phone || "—") : "—";
+
+  const now = new Date();
+  document.getElementById("vcTime").textContent = "Scanned at " + now.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+}
+function updateLastScanInstant(delegate) {
+  const now = new Date();
+  const tStr = now.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+  document.getElementById("metricLastScanTime").textContent = tStr;
+  document.getElementById("metricLastScanName").textContent = delegate.name || "—";
+  document.getElementById("lastScanCard").innerHTML = `
+    <div class="ls-name">${escHtml(delegate.name || "—")}</div>
+    <div class="ls-meta">${escHtml(delegate.committee || delegate.committeePreference || "—")} &middot; ${escHtml(delegate.portfolio || "—")}</div>
+    <div class="ls-meta" style="margin-top:4px;">Entered at ${tStr}</div>
+  `;
+}
+function scheduleReset() {
+  clearTimeout(resetTimer);
+  const countdown = document.getElementById("vcCountdown");
+  const fill = document.getElementById("cdFill");
+  countdown.style.display = "block";
+  fill.style.transition = "none";
+  fill.style.width = "100%";
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      fill.style.transition = "width 2s linear";
+      fill.style.width = "0%";
+    });
+  });
+  resetTimer = setTimeout(() => {
+    resetVerifyCard();
+  }, 2000);
+}
+
+function resetVerifyCard() {
+  const idle = document.getElementById("vcIdle");
+  const result = document.getElementById("vcResult");
+  const countdown = document.getElementById("vcCountdown");
+  result.classList.remove("show");
+  countdown.style.display = "none";
+  idle.style.display = "flex";
+}
+
+/* ============================================================
+   QR SCANNER (html5-qrcode)
+   ============================================================ */
+let html5QrCode = null;
+let scanMode = "continuous";
+let scanning = false;
+let torchEnabled = false;
+let currentCameraIndex = 0;
+let availableCameras = [];
+
+// Scan lock state (prevents the same QR frame from being processed repeatedly)
+let isProcessing = false;
+let lastScannedId = null;
+let lastScanTime = 0;
+const SCAN_COOLDOWN_MS = 3000;
+
+function handleScanResult(decodedText) {
+  const id = (decodedText || "").trim();
+  if (!id) return;
+
+  const now = Date.now();
+
+  // Ignore frames while a previous scan is still being verified
+  if (isProcessing) return;
+
+  // Ignore the SAME QR if it was scanned within the cooldown window
+  if (id === lastScannedId && (now - lastScanTime) < SCAN_COOLDOWN_MS) return;
+
+  isProcessing = true;
+  lastScannedId = id;
+  lastScanTime = now;
+
+  if (scanMode === "single" && scanning) {
+    html5QrCode.pause();
+  }
+
+  Promise.resolve(verifyAndShow(id)).finally(() => {
+    isProcessing = false;
+  });
+}
+
+const startBtn       = document.getElementById("startScanBtn");
+const stopBtn        = document.getElementById("stopScanBtn");
+const switchCamBtn   = document.getElementById("switchCameraBtn");
+const torchBtn       = document.getElementById("torchBtn");
+
+function updateScannerStatus(msg, active) {
+  const el = document.getElementById("scannerStatus");
+  const txt = document.getElementById("scannerStatusText");
+  txt.textContent = msg;
+  el.className = "scanner-status" + (active ? " active" : " idle");
+}
+
+async function startScanner() {
+  if (scanning) return;
+
+  try {
+    availableCameras = await Html5Qrcode.getCameras();
+  } catch(e) {
+    availableCameras = [];
+  }
+
+  html5QrCode = new Html5Qrcode("qr-reader");
+
+  const cameraId = availableCameras.length > 0
+    ? availableCameras[currentCameraIndex].id
+    : { facingMode: "environment" };
+
+  const config = {
+    fps: 10,
+    qrbox: { width: 240, height: 240 },
+    aspectRatio: 1.0,
+    supportZoomControl: true,
+  };
+
+  try {
+    await html5QrCode.start(
+      cameraId,
+      config,
+      (decodedText) => {
+        handleScanResult(decodedText);
+      },
+      () => {} // ignore frame errors
+    );
+    scanning = true;
+    startBtn.style.display = "none";
+    stopBtn.style.display = "";
+    if (availableCameras.length > 1) switchCamBtn.style.display = "";
+    // Check torch support
+    try {
+      const caps = html5QrCode.getRunningTrackCapabilities();
+      if (caps && caps.torch) torchBtn.style.display = "";
+    } catch(e) {}
+    updateScannerStatus("Scanner active — waiting for QR", true);
+  } catch(e) {
+    updateScannerStatus("Camera access denied or unavailable", false);
+    console.error("Scanner start failed:", e);
+  }
+}
+
+async function stopScanner() {
+  if (!scanning || !html5QrCode) return;
+  try {
+    await html5QrCode.stop();
+    html5QrCode = null;
+  } catch(e) {}
+  scanning = false;
+  torchEnabled = false;
+  startBtn.style.display = "";
+  stopBtn.style.display = "none";
+  switchCamBtn.style.display = "none";
+  torchBtn.style.display = "none";
+  updateScannerStatus("Scanner stopped", false);
+}
+
+async function switchCamera() {
+  if (!scanning || availableCameras.length < 2) return;
+  await stopScanner();
+  currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+  await startScanner();
+}
+
+async function toggleTorch() {
+  if (!html5QrCode || !scanning) return;
+  try {
+    torchEnabled = !torchEnabled;
+    await html5QrCode.applyVideoConstraints({ advanced: [{ torch: torchEnabled }] });
+    torchBtn.textContent = torchEnabled ? "🔦 Torch On" : "⚠ Torch";
+  } catch(e) {}
+}
+
+startBtn.addEventListener("click", startScanner);
+stopBtn.addEventListener("click", stopScanner);
+switchCamBtn.addEventListener("click", switchCamera);
+torchBtn.addEventListener("click", toggleTorch);
+
+// Manual ID
+document.getElementById("manualIdVerifyBtn").addEventListener("click", () => {
+  const val = document.getElementById("manualIdInput").value.trim();
+  if (val) { verifyAndShow(val); document.getElementById("manualIdInput").value = ""; }
+});
+document.getElementById("manualIdInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("manualIdVerifyBtn").click();
+});
+
+// Scan mode tabs
+document.querySelectorAll(".mode-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".mode-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    scanMode = tab.dataset.mode;
+    // If paused and continuous, resume
+    if (scanMode === "continuous" && html5QrCode && scanning) {
+      try { html5QrCode.resume(); } catch(e) {}
+    }
+  });
+});
+
+/* ============================================================
+   MANUAL DELEGATE SEARCH MODAL
+   ============================================================ */
+const manualModalMask   = document.getElementById("manualModalMask");
+const manualSearchInput = document.getElementById("manualSearchInput");
+const manualResults     = document.getElementById("manualResults");
+
+document.getElementById("manualEntryBtn").addEventListener("click", () => {
+  manualModalMask.classList.add("show");
+  manualSearchInput.focus();
+});
+function closeManualModal() { manualModalMask.classList.remove("show"); manualSearchInput.value = ""; manualResults.innerHTML = ""; }
+document.getElementById("manualModalClose").addEventListener("click", closeManualModal);
+document.getElementById("manualModalCancel").addEventListener("click", closeManualModal);
+manualModalMask.addEventListener("click", e => { if (e.target === manualModalMask) closeManualModal(); });
+
+let searchDebounce = null;
+manualSearchInput.addEventListener("input", () => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(doManualSearch, 350);
+});
+
+async function doManualSearch() {
+  const q = manualSearchInput.value.trim().toLowerCase();
+  if (q.length < 2) {
+    manualResults.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.08em;text-align:center;padding:20px;">Type at least 2 characters</div>`;
+    return;
+  }
+  manualResults.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.08em;text-align:center;padding:20px;">Searching…</div>`;
+
+  try {
+    const snap = await getDocs(collection(db, "delegates"));
+    const matches = [];
+    snap.forEach(d => {
+      const data = d.data();
+      const name  = (data.name || "").toLowerCase();
+      const phone = (data.phone || "").toLowerCase();
+      const port  = (data.portfolio || "").toLowerCase();
+      const inst  = (data.institution || "").toLowerCase();
+      if (name.includes(q) || phone.includes(q) || port.includes(q) || inst.includes(q)) {
+        matches.push({ id: d.id, ...data });
+      }
+    });
+
+    if (matches.length === 0) {
+      manualResults.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:var(--ivory-faint);letter-spacing:0.08em;text-align:center;padding:20px;">No delegates found</div>`;
+      return;
+    }
+
+    manualResults.innerHTML = matches.slice(0, 20).map(d => `
+      <div class="manual-result-item">
+        <div>
+          <div class="mri-name">${escHtml(d.name||"—")}</div>
+          <div class="mri-meta">${escHtml(d.committee||d.committeePreference||"—")} · ${escHtml(d.portfolio||"—")} · ${escHtml(d.phone||"—")}</div>
+        </div>
+        <button class="btn btn-primary btn-sm mri-btn" data-id="${escHtml(d.id)}">Mark Entry</button>
+      </div>
+    `).join("");
+
+    manualResults.querySelectorAll(".mri-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+        closeManualModal();
+        await verifyAndShow(id);
+      });
+    });
+  } catch(e) {
+    manualResults.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:#d18a8a;letter-spacing:0.08em;text-align:center;padding:20px;">Error loading delegates</div>`;
+  }
+}
+
+/* ============================================================
+   EXPORT EXCEL
+   ============================================================ */
+document.getElementById("exportEntryBtn").addEventListener("click", async () => {
+  try {
+    const today = todayDateString();
+    const q = query(
+      collection(db, "conferenceAttendance"),
+      where("date", "==", today),
+      orderBy("timestamp", "asc")
+    );
+    const snap = await getDocs(q);
+    const rows = [["Delegate Name","Phone","Committee","Portfolio","Entry Time","Verified By"]];
+    snap.forEach(d => {
+      const data = d.data();
+      const ts = data.timestamp ? data.timestamp.toDate().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"}) : "—";
+      rows.push([
+        data.delegateName || "—",
+        data.phone || "—",
+        data.committee || "—",
+        data.portfolio || "—",
+        ts,
+        data.verifiedBy || "—"
+      ]);
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, "Conference Entry");
+    XLSX.writeFile(wb, `MUNITE_Conference_Entry_${today}.xlsx`);
+  } catch(e) {
+    alert("Export failed: " + e.message);
+  }
+});
+
+document.getElementById("refreshLogBtn").addEventListener("click", () => {
+  // listener handles it
+});
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+function escHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+/* ============================================================
+   ON UNLOCK — BOOT SEQUENCE
+   ============================================================ */
+function onAppUnlock() {
+  initNav();
+  startClock();
+  listenConferenceState();
+  listenEntries();
+  listenDelegates();
+}
+</script>
+</body>
+</html>

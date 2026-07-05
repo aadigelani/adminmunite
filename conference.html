@@ -1133,6 +1133,7 @@ td.cell-mono{ font-family: var(--font-mono); font-size: 11.5px; }
           <div style="color:var(--ivory-faint); font-size:9.5px;">Restricted Access</div>
         </div>
       </div>
+      <a href="admin.html" class="logout-link" style="margin-bottom:8px;display:block;">&larr; Back to Admin</a>
       <a class="logout-link" id="logoutBtn">Lock Console</a>
     </div>
   </aside>
@@ -1577,13 +1578,19 @@ const CONFERENCE_KEY = "GADKARI";
 const lockScreen   = document.getElementById("lockScreen");
 const appShell     = document.getElementById("appShell");
 
-// The dashboard opens immediately. No password is required to enter the app.
+// Require the same secretariat session used by admin.html before entering.
+const currentAdminCode = sessionStorage.getItem("adminCode");
+if (!currentAdminCode) {
+  window.location.href = "index.html";
+}
+
 lockScreen.style.display = "none";
 appShell.classList.add("unlocked");
 onAppUnlock();
 
 document.getElementById("logoutBtn").addEventListener("click", () => {
-  location.reload();
+  sessionStorage.removeItem("adminCode");
+  window.location.href = "index.html";
 });
 
 /* ============================================================

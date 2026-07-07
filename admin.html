@@ -3272,13 +3272,36 @@ function initCommitteeManagement() {
 
     // Calculate delegate counts dynamically
     let delegateCounts = {};
-    try {
-      const delSnap = await getDocs(collection(db, "delegates"));
-      delSnap.forEach(d => {
-        const cp = (d.data().committeePreference || "").trim();
-        if (cp) delegateCounts[cp] = (delegateCounts[cp] || 0) + 1;
-      });
-    } catch(e) { console.warn("delegate count:", e); }
+
+      const normalizeCommittee = (name = "") =>
+        name
+          .trim()
+          .replace(/\s*-\s*/g, "-")
+          .replace(/\s+/g, " ")
+          .toUpperCase();
+
+      try {
+
+        const delSnap = await getDocs(collection(db, "delegates"));
+
+        delSnap.forEach(docSnap => {
+
+          const cp = normalizeCommittee(
+            docSnap.data().committeePreference || ""
+          );
+
+          if (!cp) return;
+
+          delegateCounts[cp] =
+            (delegateCounts[cp] || 0) + 1;
+
+        });
+
+      } catch(e) {
+
+        console.warn("delegate count:", e);
+
+      }
 
     if (committeeCache.length === 0) {
       cmCardsGrid.innerHTML = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--ivory-faint);letter-spacing:0.1em;padding:30px 0;">NO COMMITTEES YET. ADD YOUR FIRST COMMITTEE.</div>`;
@@ -3466,8 +3489,11 @@ function initExports() {
     }
 
     exCardsGrid.innerHTML = committeeCache.map(({ id, data: c }) => {
-      const key = c.shortName || c.name || id;
-      const count = delegateCounts[key] || delegateCounts[c.name] || 0;
+      const key = normalizeCommittee(
+        c.shortName || c.name || id
+      );
+
+      const count = delegateCounts[key] || 0;
       return `
         <div class="export-card">
           <div class="ec-name">${c.shortName || id}</div>

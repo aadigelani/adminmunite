@@ -4180,7 +4180,7 @@ document.addEventListener(
             phone: row.phone,
             dob: "",
             isRegistered: false,
-            committeePreference: row.committeePreference,
+            committeePreference: row.committee,
             email: "",
             institution: row.institution,
             allocated: false,
@@ -4189,10 +4189,12 @@ document.addEventListener(
           });
 
         });
+        console.log(chunk);
         await batch.commit();
         imported += chunk.length;
       } catch(err) {
-        console.error("Batch failed:", err);
+        console.error(err);
+        alert(err.message);
         failed += chunk.length;
       }
       biProgressFill.style.width = `${Math.round((i + chunk.length) / total * 100)}%`;

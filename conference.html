@@ -1578,19 +1578,13 @@ const CONFERENCE_KEY = "GADKARI";
 const lockScreen   = document.getElementById("lockScreen");
 const appShell     = document.getElementById("appShell");
 
-// Require the same secretariat session used by admin.html before entering.
-const currentAdminCode = sessionStorage.getItem("adminCode");
-if (!currentAdminCode) {
-  window.location.href = "index.html";
-}
-
+// Conference page opens directly
 lockScreen.style.display = "none";
 appShell.classList.add("unlocked");
 onAppUnlock();
 
 document.getElementById("logoutBtn").addEventListener("click", () => {
-  sessionStorage.removeItem("adminCode");
-  window.location.href = "index.html";
+  window.location.href = "admin.html";
 });
 
 /* ============================================================

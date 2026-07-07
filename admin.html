@@ -2343,7 +2343,154 @@ document.addEventListener("click", async (e) => {
    MOCK DATA — ALLOCATIONS
    TODO: Replace with Firestore collection `allocations`
    ============================================================ */
+/* ============================================================
+   LIVE ALLOCATIONS TABLE
+   ============================================================ */
 
+async function loadAllocations() {
+
+  try {
+
+    const snapshot = await getDocs(collection(db, "delegates"));
+
+    const tbody = document.getElementById("allocationTableBody");
+
+    let html = "";
+
+    const delegates = [];
+
+    snapshot.forEach(docSnap => {
+
+      const d = docSnap.data();
+
+      if (d.allocated === true) {
+        delegates.push(d);
+      }
+
+    });
+
+    delegates.sort((a, b) => {
+
+      const ta = a.createdAt ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt ? b.createdAt.toMillis() : 0;
+
+      return tb - ta;
+
+    });
+
+    delegates.forEach(d => {
+
+      const time = d.createdAt
+        ? d.createdAt.toDate().toLocaleString()
+        : "-";
+
+      html += `
+        <tr>
+
+          <td class="cell-name">
+            ${d.name || "-"}
+          </td>
+
+          <td>
+            ${d.committeePreference || d.committee || "-"}
+          </td>
+
+          <td>
+            ${d.portfolio || "-"}
+          </td>
+
+          <td class="cell-mono">
+            ${time}
+          </td>
+
+          <td>
+            <span class="status-tag allocated">
+              Allocated
+            </span>
+          </td>
+
+          <td>
+
+            <button
+              class="btn btn-ghost btn-sm allocation-remove-btn"
+              data-phone="${d.phone}">
+              Remove
+            </button>
+
+          </td>
+
+        </tr>
+      `;
+
+    });
+
+    tbody.innerHTML =
+      html ||
+      `
+      <tr>
+        <td colspan="6"
+            style="text-align:center;padding:30px;color:var(--ivory-faint);">
+            No allocations found.
+        </td>
+      </tr>
+      `;
+
+  }
+
+  catch(err) {
+
+    console.error(err);
+
+  }
+
+}
+
+/* Remove Allocation */
+
+document.addEventListener("click", async (e) => {
+
+  const btn = e.target.closest(".allocation-remove-btn");
+
+  if (!btn) return;
+
+  if (!confirm("Remove this allocation?")) return;
+
+  try {
+
+    await updateDoc(
+      doc(db, "delegates", btn.dataset.phone),
+      {
+        allocated: false,
+        portfolio: ""
+      }
+    );
+
+    await addDoc(
+      collection(db, "adminActivityLogs"),
+      {
+        actor: currentAdminCode,
+        action: "Removed delegate allocation",
+        timestamp: serverTimestamp()
+      }
+    );
+
+    loadAllocations();
+    loadDelegates();
+    loadOverviewMetrics();
+    loadOverviewActivity();
+    loadActivityLogs();
+
+  }
+
+  catch(err) {
+
+    console.error(err);
+
+    alert("Failed to remove allocation.");
+
+  }
+
+});
 /* ============================================================
    ADD DELEGATE SLIDE-OVER
    ============================================================ */
@@ -2877,6 +3024,7 @@ loadAdminCodes();
 loadOverviewActivity();
 loadLoginHistory();
 loadPartnershipRequests();
+loadAllocations();
 initCommitteeManagement();
 initExports();
 initReports();

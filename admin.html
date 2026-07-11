@@ -1130,6 +1130,74 @@ tbody tr:last-child td{ border-bottom:none; }
   border-top:1px solid rgba(200,160,66,0.12);
   position:sticky; bottom:0; background:linear-gradient(180deg, var(--purple-deep), #160826);
 }
+
+/* ============================================================
+   MANUAL ASSIGN MODAL — Portfolio Assignment
+   ============================================================ */
+.ma-search-results{
+  display:none;
+  margin-top:8px;
+  max-height:220px;
+  overflow-y:auto;
+  background: var(--black);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+}
+.ma-search-results.show{ display:block; }
+.ma-search-item{
+  padding:10px 14px;
+  cursor:pointer;
+  border-bottom:1px solid rgba(200,160,66,0.08);
+  transition: background .15s ease;
+}
+.ma-search-item:last-child{ border-bottom:none; }
+.ma-search-item:hover{ background: rgba(200,160,66,0.08); }
+.ma-si-name{
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ivory);
+}
+.ma-si-meta{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ivory-faint);
+  margin-top:3px;
+  letter-spacing:0.04em;
+}
+.ma-tag-portfolio{
+  color: var(--gold-bright);
+  font-size:11px;
+}
+.ma-search-empty{
+  padding:12px 14px;
+  font-family: var(--font-sans);
+  font-size:12.5px;
+  color: var(--ivory-faint);
+}
+.ma-readonly-box{
+  padding:9px 12px;
+  background: var(--black);
+  border: 1px solid var(--purple-line);
+  border-radius: var(--radius);
+  color: var(--ivory);
+  font-size:13px;
+}
+.ma-confirm-box{
+  margin-top:18px;
+  padding:16px 18px;
+  background: rgba(200,160,66,0.06);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+}
+.ma-confirm-row{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 0;
+  border-bottom:1px dashed rgba(200,160,66,0.15);
+  font-size:12.5px;
+}
+.ma-confirm-row:last-child{ border-bottom:none; }
+.ma-confirm-row span{ color: var(--ivory-dim); }
+.ma-confirm-row strong{ color: var(--gold-bright); font-family: var(--font-mono); font-weight:500; font-size:12px; }
 .toggle-switch-wrap{
   display:flex; align-items:center; gap:12px; padding:10px 0;
 }
@@ -1986,6 +2054,51 @@ tbody tr:last-child td{ border-bottom:none; }
     </div>
   </div>
 </div>
+<!-- ================= MANUAL ASSIGN MODAL ================= -->
+<div class="cm-modal-mask" id="maModalMask">
+  <div class="cm-modal" style="width:560px;">
+    <div class="cm-modal-head">
+      <h3>Manual Assign Portfolio</h3>
+      <button class="close-x" id="maModalClose">&#215;</button>
+    </div>
+    <div class="cm-modal-body">
+      <div class="field">
+        <label>Search Delegate</label>
+        <input class="input" type="text" id="maDelegateSearch" placeholder="Search by name, phone, or committee…" autocomplete="off">
+        <div class="ma-search-results" id="maSearchResults"></div>
+      </div>
+
+      <div id="maSelectedInfo" style="display:none;">
+        <div class="field">
+          <label>Selected Delegate</label>
+          <div class="ma-readonly-box" id="maSelectedDelegateBox">-</div>
+        </div>
+        <div class="field">
+          <label>Committee (Preference)</label>
+          <div class="ma-readonly-box" id="maSelectedCommitteeBox">-</div>
+        </div>
+        <div class="field">
+          <label>Portfolio</label>
+          <select class="select" id="maPortfolioSelect">
+            <option value="">Select a delegate first…</option>
+          </select>
+        </div>
+
+        <div class="ma-confirm-box" id="maConfirmBox" style="display:none;">
+          <div class="ma-confirm-row"><span>Delegate</span><strong id="maConfirmDelegate"></strong></div>
+          <div class="ma-confirm-row"><span>Committee</span><strong id="maConfirmCommittee"></strong></div>
+          <div class="ma-confirm-row"><span>Portfolio</span><strong id="maConfirmPortfolio"></strong></div>
+        </div>
+      </div>
+
+      <div class="field-hint" id="maErrorBox" style="color:#d18a8a;display:none;margin-top:12px;"></div>
+    </div>
+    <div class="cm-modal-foot">
+      <button class="btn btn-ghost" id="maCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="maConfirmBtn" disabled>Confirm Assignment</button>
+    </div>
+  </div>
+</div>
 
 <!-- ================= ADD DELEGATE SLIDE-OVER ================= -->
 <div class="overlay-mask" id="overlayMask"></div>
@@ -2687,10 +2800,310 @@ document.getElementById('downloadXlsBtn')
   );
 
 });
-document.getElementById('manualAssignBtn').addEventListener('click', () => {
-  // TODO: Open a manual assignment flow writing to `allocations` collection
-  alert('Manual assignment flow will write directly to the allocations collection.');
-});
+/* ============================================================
+   MANUAL ASSIGN — Portfolio Assignment Modal
+   ============================================================ */
+function initManualAssign() {
+  const maModalMask            = document.getElementById("maModalMask");
+  const maModalClose           = document.getElementById("maModalClose");
+  const maCancelBtn            = document.getElementById("maCancelBtn");
+  const maConfirmBtn           = document.getElementById("maConfirmBtn");
+  const maDelegateSearch       = document.getElementById("maDelegateSearch");
+  const maSearchResults        = document.getElementById("maSearchResults");
+  const maSelectedInfo         = document.getElementById("maSelectedInfo");
+  const maSelectedDelegateBox  = document.getElementById("maSelectedDelegateBox");
+  const maSelectedCommitteeBox = document.getElementById("maSelectedCommitteeBox");
+  const maPortfolioSelect      = document.getElementById("maPortfolioSelect");
+  const maConfirmBox           = document.getElementById("maConfirmBox");
+  const maConfirmDelegate      = document.getElementById("maConfirmDelegate");
+  const maConfirmCommittee     = document.getElementById("maConfirmCommittee");
+  const maConfirmPortfolio     = document.getElementById("maConfirmPortfolio");
+  const maErrorBox             = document.getElementById("maErrorBox");
+
+  let maSelectedDelegate = null; // { id, d }
+
+  function maEscHtml(s) {
+    return String(s || "").replace(/[&<>"']/g, c => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+  }
+
+  function maShowError(msg) {
+    maErrorBox.textContent = msg;
+    maErrorBox.style.display = "block";
+  }
+  function maClearError() {
+    maErrorBox.textContent = "";
+    maErrorBox.style.display = "none";
+  }
+
+  function maResetModal() {
+    maDelegateSearch.value = "";
+    maSearchResults.innerHTML = "";
+    maSearchResults.classList.remove("show");
+    maSelectedInfo.style.display = "none";
+    maSelectedDelegate = null;
+    maPortfolioSelect.innerHTML = '<option value="">Select a delegate first…</option>';
+    maPortfolioSelect.disabled = true;
+    maConfirmBox.style.display = "none";
+    maConfirmBtn.disabled = true;
+    maClearError();
+  }
+
+  function openMaModal() {
+    maResetModal();
+    maModalMask.classList.add("show");
+  }
+  function closeMaModal() {
+    maModalMask.classList.remove("show");
+    maResetModal();
+  }
+
+  document.getElementById('manualAssignBtn').addEventListener('click', openMaModal);
+  maModalClose.addEventListener("click", closeMaModal);
+  maCancelBtn.addEventListener("click", closeMaModal);
+  maModalMask.addEventListener("click", e => { if (e.target === maModalMask) closeMaModal(); });
+
+  /* ---- Delegate search (by name, phone, or committee) ---- */
+  maDelegateSearch.addEventListener("input", () => {
+    const term = maDelegateSearch.value.trim().toLowerCase();
+    maClearError();
+    if (!term) {
+      maSearchResults.innerHTML = "";
+      maSearchResults.classList.remove("show");
+      return;
+    }
+    const matches = allDelegatesCache.filter(({ d }) => {
+      const name = (d.name || "").toLowerCase();
+      const phone = (d.phone || "").toLowerCase();
+      const committee = (d.committeePreference || "").toLowerCase();
+      return name.includes(term) || phone.includes(term) || committee.includes(term);
+    }).slice(0, 30);
+
+    if (matches.length === 0) {
+      maSearchResults.innerHTML = `<div class="ma-search-empty">No delegates found.</div>`;
+      maSearchResults.classList.add("show");
+      return;
+    }
+
+    maSearchResults.innerHTML = matches.map(({ id, d }) => {
+      const label = d.allocated
+        ? `&#10003; ${maEscHtml(d.name || id)} <span class="ma-tag-portfolio">(${maEscHtml(d.portfolio || "—")})</span>`
+        : maEscHtml(d.name || id);
+      return `
+        <div class="ma-search-item" data-id="${maEscHtml(id)}">
+          <div class="ma-si-name">${label}</div>
+          <div class="ma-si-meta">${maEscHtml(d.phone || "-")} &middot; ${maEscHtml(d.committeePreference || "No committee")}</div>
+        </div>
+      `;
+    }).join("");
+    maSearchResults.classList.add("show");
+  });
+
+  maSearchResults.addEventListener("click", async (e) => {
+    const item = e.target.closest(".ma-search-item");
+    if (!item) return;
+    const id = item.dataset.id;
+    const entry = allDelegatesCache.find(x => x.id === id);
+    if (!entry) return;
+    await maSelectDelegate(entry);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!maSearchResults.contains(e.target) && e.target !== maDelegateSearch) {
+      maSearchResults.classList.remove("show");
+    }
+  });
+
+  /* ---- Select a delegate: read committeePreference (read-only) ---- */
+  async function maSelectDelegate(entry) {
+    maSelectedDelegate = entry;
+    const d = entry.d;
+    maDelegateSearch.value = d.name || entry.id;
+    maSearchResults.classList.remove("show");
+    maClearError();
+
+    const committeeKey = d.committeePreference || "";
+    maSelectedDelegateBox.textContent = `${d.name || entry.id} (${d.phone || entry.id})`;
+    maSelectedCommitteeBox.textContent = committeeKey || "No committee preference set";
+    maSelectedInfo.style.display = "block";
+    maConfirmBox.style.display = "none";
+    maConfirmBtn.disabled = true;
+
+    if (!committeeKey) {
+      maShowError("This delegate has no committee preference set. Cannot assign a portfolio.");
+      maPortfolioSelect.innerHTML = '<option value="">No committee preference</option>';
+      maPortfolioSelect.disabled = true;
+      return;
+    }
+
+    await maLoadPortfoliosForCommittee(committeeKey, entry);
+  }
+
+  /* ---- Read committee doc, load its portfolioFile JSON, filter out taken portfolios ---- */
+  async function maLoadPortfoliosForCommittee(committeeKey, entry) {
+    maPortfolioSelect.innerHTML = '<option value="">Loading portfolios…</option>';
+    maPortfolioSelect.disabled = true;
+
+    try {
+      let committeeDoc = committeeCache.find(c => c.id === committeeKey || c.data.shortName === committeeKey);
+      if (!committeeDoc) {
+        const directSnap = await getDoc(doc(db, "committees", committeeKey));
+        if (directSnap.exists()) {
+          committeeDoc = { id: directSnap.id, data: directSnap.data() };
+        }
+      }
+
+      if (!committeeDoc) {
+        maShowError(`Committee "${committeeKey}" was not found in Firestore.`);
+        maPortfolioSelect.innerHTML = '<option value="">Committee not found</option>';
+        maPortfolioSelect.disabled = true;
+        return;
+      }
+
+      const portfolioFile = committeeDoc.data.portfolioFile;
+      if (!portfolioFile) {
+        maShowError(`Committee "${committeeDoc.data.name || committeeKey}" has no portfolio JSON file configured.`);
+        maPortfolioSelect.innerHTML = '<option value="">No portfolio file configured</option>';
+        maPortfolioSelect.disabled = true;
+        return;
+      }
+
+      let portfolioList;
+      try {
+        const res = await fetch(portfolioFile);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        portfolioList = Array.isArray(json)
+          ? json
+          : (Array.isArray(json.portfolios) ? json.portfolios : null);
+        if (!portfolioList) throw new Error("Unrecognized JSON format");
+      } catch (fetchErr) {
+        console.error(fetchErr);
+        maShowError(`Failed to load portfolio file "${portfolioFile}".`);
+        maPortfolioSelect.innerHTML = '<option value="">Portfolio JSON missing</option>';
+        maPortfolioSelect.disabled = true;
+        return;
+      }
+
+      portfolioList = portfolioList.map(p =>
+        (typeof p === "string" ? p : (p.name || p.portfolio || p.country || String(p)))
+      );
+
+      const takenPortfolios = new Set();
+      allDelegatesCache.forEach(({ id, d }) => {
+        if (d.allocated === true && d.committeePreference === committeeKey && d.portfolio) {
+          if (!(entry && id === entry.id)) {
+            takenPortfolios.add(d.portfolio);
+          }
+        }
+      });
+
+      let availablePortfolios = portfolioList.filter(p => !takenPortfolios.has(p));
+
+      if (entry && entry.d.allocated === true && entry.d.portfolio && !availablePortfolios.includes(entry.d.portfolio)) {
+        availablePortfolios.push(entry.d.portfolio);
+      }
+
+      availablePortfolios = [...new Set(availablePortfolios)];
+
+      if (availablePortfolios.length === 0) {
+        maShowError("No portfolios available for this committee — all portfolios are already assigned.");
+        maPortfolioSelect.innerHTML = '<option value="">No portfolios available</option>';
+        maPortfolioSelect.disabled = true;
+        return;
+      }
+
+      maPortfolioSelect.disabled = false;
+      maPortfolioSelect.innerHTML = '<option value="">Select a portfolio…</option>' +
+        availablePortfolios.map(p => {
+          const isCurrent = entry && entry.d.portfolio === p;
+          return `<option value="${maEscHtml(p)}" ${isCurrent ? "selected" : ""}>${maEscHtml(p)}${isCurrent ? " (current)" : ""}</option>`;
+        }).join("");
+
+      maUpdateConfirmState();
+    } catch (err) {
+      console.error(err);
+      maShowError("Failed to load portfolios for this committee.");
+      maPortfolioSelect.innerHTML = '<option value="">Error loading portfolios</option>';
+      maPortfolioSelect.disabled = true;
+    }
+  }
+
+  function maUpdateConfirmState() {
+    const portfolio = maPortfolioSelect.value;
+    if (maSelectedDelegate && portfolio) {
+      maConfirmDelegate.textContent = `${maSelectedDelegate.d.name || maSelectedDelegate.id} (${maSelectedDelegate.d.phone || maSelectedDelegate.id})`;
+      maConfirmCommittee.textContent = maSelectedDelegate.d.committeePreference || "-";
+      maConfirmPortfolio.textContent = portfolio;
+      maConfirmBox.style.display = "block";
+      maConfirmBtn.disabled = false;
+    } else {
+      maConfirmBox.style.display = "none";
+      maConfirmBtn.disabled = true;
+    }
+  }
+
+  maPortfolioSelect.addEventListener("change", maUpdateConfirmState);
+
+  /* ---- Confirm: write allocated + portfolio to delegates/{phone} only ---- */
+  maConfirmBtn.addEventListener("click", async () => {
+    if (!maSelectedDelegate) return;
+    const portfolio = maPortfolioSelect.value;
+    if (!portfolio) return;
+
+    maConfirmBtn.disabled = true;
+    maClearError();
+
+    try {
+      const freshSnap = await getDocs(collection(db, "delegates"));
+      let duplicateFound = false;
+      freshSnap.forEach(docSnap => {
+        const dd = docSnap.data();
+        if (
+          docSnap.id !== maSelectedDelegate.id &&
+          dd.allocated === true &&
+          dd.committeePreference === maSelectedDelegate.d.committeePreference &&
+          dd.portfolio === portfolio
+        ) {
+          duplicateFound = true;
+        }
+      });
+
+      if (duplicateFound) {
+        maShowError(`Portfolio "${portfolio}" has already been assigned to another delegate in this committee.`);
+        maConfirmBtn.disabled = false;
+        return;
+      }
+
+      await updateDoc(doc(db, "delegates", maSelectedDelegate.id), {
+        allocated: true,
+        portfolio: portfolio
+      });
+
+      await addDoc(collection(db, "adminActivityLogs"), {
+        actor: currentAdminCode || "admin",
+        action: `Manually assigned portfolio "${portfolio}" to ${maSelectedDelegate.d.name || maSelectedDelegate.id} (${maSelectedDelegate.d.committeePreference || "-"})`,
+        timestamp: serverTimestamp()
+      });
+
+      closeMaModal();
+
+      loadDelegates();
+      loadAllocations();
+      loadOverviewMetrics();
+      loadOverviewActivity();
+      loadActivityLogs();
+
+    } catch (err) {
+      console.error(err);
+      maShowError("Failed to save assignment. Firestore write failed.");
+      maConfirmBtn.disabled = false;
+    }
+  });
+}
+
+initManualAssign();
 
 /* ============================================================
    NOTIFICATIONS — priority picker + preview + publish
